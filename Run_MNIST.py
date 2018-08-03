@@ -1,20 +1,10 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
+from RBM import RBM
 import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
-
-def treshold_data(data, threshold):
-    """
-    threshold data with threshold value
-    :param data: numpy array
-    :param threshold: float
-    :return: thresholded data
-    """
-    data = np.where(data >= threshold, np.ones_like(data), np.zeros_like(data))
-    return data
 
 
 def load_mnist_data():
@@ -53,6 +43,27 @@ def load_mnist_data():
     return (x_train, y_train), (x_test, y_test)
 
 
+def treshold_data(data, threshold):
+    """
+    threshold data with threshold value
+    :param data: numpy array
+    :param threshold: float
+    :return: thresholded data
+    """
+    data = np.where(data >= threshold, np.ones_like(data), np.zeros_like(data))
+    data = data.astype(np.float32)
+    return data
+
+
+def visualize_features(dbn, layer_index, feature_index):
+    receptive_field = dbn['layer{}'.format(layer_index)].weights[:, feature_index]
+    for li in range(layer_index-1, -1, -1):
+        receptive_field = np.matmul(receptive_field,
+                                    np.transpose(dbn['layer{}'.format(li)].weights[:, feature_index]))
+
+    return receptive_field
+
+
 def main():
     # load data
     (x_train, y_train), (x_test, y_test) = load_mnist_data()
@@ -63,6 +74,16 @@ def main():
     plt.imshow(x_train[np.random.randint(x_train.shape[0]), :].reshape([28, 28]), cmap='binary')
     plt.show()
 
+    # Set up Restricted Boltzmann machine
+    layer1 = RBM(num_vunits=x_train.shape[1],
+                 num_hunits=512)
+
+    # Train RBM
+    layer1.train_rbm(train_data=x_train,
+                     epochs=25,
+                     batch_size=128,
+                     summary_path='/home/jonas/PycharmProjects/RBM/MNIST_Summaries/',
+                     summary_frequency=50)
 
 if __name__ == '__main__':
     main()

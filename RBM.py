@@ -59,9 +59,9 @@ class RBM:
             self.hbiases = hbiases
             print('Hidden biases initialized.')
 
-    def train_RBM(self, train_data, epochs=10, batch_size=32, summary_path=None, summary_frequency=10,
-                  DBN=None, update_vbiases=True, start_learning_rate=0.01, learning_rate_decay=(10, 1.0),
-                  CD_steps=1, sparsity_rate=0.0, sparsity_goal=0.1, keys=None, data_types=None):
+    def train_rbm(self, train_data, epochs=10, batch_size=32, summary_path=None, summary_frequency=10,
+                  dbn=None, update_vbiases=True, start_learning_rate=0.01, learning_rate_decay=(10, 1.0),
+                  cd_steps=1, sparsity_rate=0.0, sparsity_goal=0.1, keys=None, data_types=None):
 
         # set up summary writer
         if summary_path:
@@ -95,8 +95,8 @@ class RBM:
         # define initialization operation
         train_init_op = iterator.make_initializer(train_dataset)
 
-        # if RBM is part of DBN: upward propagation of inputs
-        v0_ = train_utils.upward_propagation(batch, DBN, self.layer_index)
+        # if RBM is part of dbn: upward propagation of inputs
+        v0_ = train_utils.upward_propagation(batch, dbn, self.layer_index)
 
         # set up variables for training:
         # global step defines epoch for learning rate decay
@@ -142,11 +142,11 @@ class RBM:
         # contrastive divergence procedure:
         with tf.name_scope('CD'):
             if self.layer_type == 'gb' or self.layer_type == 'gr':
-                h0_, h0, vn_, vn, hn_ = train_utils.CD_procedure(v0_, self.layer_type, CD_steps,
+                h0_, h0, vn_, vn, hn_ = train_utils.CD_procedure(v0_, self.layer_type, cd_steps,
                                                                  train_vbiases, train_hbiases,
                                                                  train_weights, train_log_sigmas)
             else:
-                h0_, h0, vn_, vn, hn_ = train_utils.CD_procedure(v0_, self.layer_type, CD_steps,
+                h0_, h0, vn_, vn, hn_ = train_utils.CD_procedure(v0_, self.layer_type, cd_steps,
                                                                  train_vbiases, train_hbiases, train_weights)
 
         with tf.name_scope('calculate_error'):
