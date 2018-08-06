@@ -80,7 +80,7 @@ class RBM:
                                                            shuffle_buffer=100000,
                                                            parallel_reads=len(train_data), num_cores=8)
         else:
-            raise TypeError('train_data needs to be either numpy array or list of file paths')
+            raise TypeError('train_data needs to be either numpy array or list of TFRecord file paths')
 
         # initializable iterator
         iterator = tf.data.Iterator.from_structure(train_dataset.output_types, train_dataset.output_shapes)

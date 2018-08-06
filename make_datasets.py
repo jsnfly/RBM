@@ -2,7 +2,7 @@ import tensorflow as tf
 
 
 def simple_dataset(training_samples, batch_size, shuffle_buffer=0, cache=True):
-    '''
+    """
     prepare a dataset from numpy array without applying a function to it
     Args:
         training_samples: numpy array of training samples, shape: [num_samples,num_vUnits]
@@ -11,7 +11,7 @@ def simple_dataset(training_samples, batch_size, shuffle_buffer=0, cache=True):
         cache: whether to cache the dataset, should be set to False only for large datasets
     Returns:
         dataset: (shuffled) and batched dataset
-    '''
+    """
     dataset = tf.data.Dataset.from_tensor_slices(training_samples)
     if shuffle_buffer != 0:
         dataset = dataset.shuffle(buffer_size=shuffle_buffer)
@@ -23,25 +23,25 @@ def simple_dataset(training_samples, batch_size, shuffle_buffer=0, cache=True):
 
 
 def flatten1(x):
-    '''
+    """
     flatten tensor x
     -> results in [sample_ch1,sample_ch2,sample_ch3,sample_ch1,sample_ch2,...]
-    '''
+    """
     flat = tf.reshape(x, [-1])
     return flat
 
 
 def flatten2(x):
-    '''
+    """
     flatten tensor x, column major
     -> results in [samples_ch1,samples_ch2,samples_ch3]
-    '''
+    """
     flat = tf.reshape(tf.transpose(x), [-1])
     return flat
 
 
 def sliding_window_dataset(training_samples, window_size, batch_size, stride=1, num_cores=4):
-    '''
+    """
     prerpare a dataset by slinding an input window over the samples
     Args:
         training_samples: numpy array of training samples, shape: [num_samples,num_channels]
@@ -49,7 +49,7 @@ def sliding_window_dataset(training_samples, window_size, batch_size, stride=1, 
         num_cores: number of CPU cores available in the system
     Returns:
         dataset: (shuffled) and batched sliding window dataset
-    '''
+    """
     dataset = tf.data.Dataset.from_tensor_slices(training_samples)
     dataset = dataset.apply(tf.contrib.data.sliding_window_batch(window_size, stride=stride))
     dataset = dataset.map(map_func=flatten2, num_parallel_calls=num_cores)
@@ -58,11 +58,11 @@ def sliding_window_dataset(training_samples, window_size, batch_size, stride=1, 
 
 
 def make_one_hot_window_label(sliding_window_sample):
-    '''
+    """
     helper function for sliding_window_dataset_labels,
     casts labels to one hot lables and then transforms a window with window_size labels
     into just a single label for the whole window
-    '''
+    """
     one_hot_labels = tf.one_hot(sliding_window_sample, depth=5, dtype=tf.int32)
     reshaped = tf.reshape(one_hot_labels, [-1, one_hot_labels.shape[-1]])
     #   mean = tf.reduce_mean(reshaped,axis=0)
@@ -73,7 +73,7 @@ def make_one_hot_window_label(sliding_window_sample):
 
 
 def sliding_window_dataset_labels(one_hot_labels, window_size, batch_size, stride=1, num_cores=4):
-    '''
+    """
     prerpare a dataset by sliding an input window over the labels
     Args:
         one_hot_labels: numpy array of training labels, shape: [num_samples,num_classes]
@@ -81,7 +81,7 @@ def sliding_window_dataset_labels(one_hot_labels, window_size, batch_size, strid
         num_cores: number of CPU cores available in the system
     Returns:
         dataset: (shuffled) and batched sliding window dataset
-    '''
+    """
     dataset = tf.data.Dataset.from_tensor_slices(one_hot_labels)
     dataset = dataset.apply(tf.contrib.data.sliding_window_batch(window_size, stride=stride))
     dataset = dataset.map(map_func=make_one_hot_window_label, num_parallel_calls=num_cores)
@@ -90,20 +90,20 @@ def sliding_window_dataset_labels(one_hot_labels, window_size, batch_size, strid
 
 
 def _bytes_feature(value):
-    '''
+    """
     helper funtion to convert value into a bytes feature
-    '''
+    """
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
 def write_to_TFRecord(file_name, keys_and_raw_features):
-    '''
+    """
     write features to TFRecords file
     Args:
         file_name: name of TFRecords file
         keys_and_raw_features: dictionary, where keys are the names of the features
         and the corresponding values are the features
-    '''
+    """
     # open the TFRecords file
     writer = tf.python_io.TFRecordWriter(file_name)
     for i in range(len(keys_and_raw_features[list(keys_and_raw_features.keys())[0]])):
@@ -119,7 +119,7 @@ def write_to_TFRecord(file_name, keys_and_raw_features):
 
 
 def dataset_from_TFRecords(file_name, batch_size, keys, data_types, shuffle_buffer=0, parallel_reads=1, num_cores=4):
-    '''
+    """
     returns features with names specified in keys with types from data_types
     Args:
         file_name: name of TFRecords file, string
@@ -130,12 +130,12 @@ def dataset_from_TFRecords(file_name, batch_size, keys, data_types, shuffle_buff
         shuffle_buffer: number of examples that are shuffled simultaniously, 0 means no shuffeling
         parallel_reads: number of files that are read in parallel, int
         num_cores: number of CPU cores available in the system
-    '''
+    """
 
     def parse(serialized):
-        '''
+        """
         helper function: convert dataset from TFRecords file
-        '''
+        """
         features = {}
         for key in keys:
             features[key] = tf.FixedLenFeature([], tf.string)
@@ -166,7 +166,7 @@ def dataset_from_TFRecords(file_name, batch_size, keys, data_types, shuffle_buff
 
 
 def make_LSH_values_and_indicies(batch, random_binary_matrix, num_KCs, p_WTA, return_WTA_matrix=False):
-    '''
+    """
     return values and indicies of WTA_activation
     Args:
         batch: batch to calculate WTA activations from, shape [batch_size,num_vUnits]
@@ -178,7 +178,7 @@ def make_LSH_values_and_indicies(batch, random_binary_matrix, num_KCs, p_WTA, re
     Returns:
         WTA_values: values of WTA units, shape [batch_size,num_activations]
         WTA_indices_flat: indices of WTA units, shape [batch_size,num_activations]
-    '''
+    """
     num_activations = int(p_WTA * num_KCs)
     activation_KCs = tf.matmul(batch, random_binary_matrix)
     WTA_values, WTA_indices_flat = tf.nn.top_k(activation_KCs, k=num_activations)
@@ -195,7 +195,7 @@ def make_LSH_values_and_indicies(batch, random_binary_matrix, num_KCs, p_WTA, re
 
 
 def WTA_activations_from_values_and_indices(values, indices, num_KCs, p_WTA):
-    '''
+    """
     get WTA matrix from values and indicies
     Args:
         values: values of WTA units, shape [batch_size,num_activations]
@@ -204,7 +204,7 @@ def WTA_activations_from_values_and_indices(values, indices, num_KCs, p_WTA):
         p_WTA: percentage of WTA cells, float
     Returns:
         WTA_rec: reconstructed matrix, shape [batch_size,num_KCs]
-    '''
+    """
     num_activations = int(p_WTA * num_KCs)
     batch_size = tf.shape(values)[0]
     indices = tf.stack([tf.stack([tf.range(start=0, limit=batch_size) for i in range(num_activations)], axis=1),
@@ -216,9 +216,9 @@ def WTA_activations_from_values_and_indices(values, indices, num_KCs, p_WTA):
 
 
 def WTA_activations_from_values_and_indices_map_fn(values, indices, labels):
-    '''
+    """
     same as WTA_activations_from_values_and_indices but for a dataset
-    '''
+    """
     num_KCs = 16 * 3 * 256
     p_WTA = 0.05
 
