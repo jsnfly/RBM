@@ -9,6 +9,7 @@ from RBM import RBM
 import train_utils
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import sampling
 font = {'family': 'sans-serif',
         'weight': 'medium',
         'size': 12}
@@ -98,6 +99,20 @@ def plot_PCA_and_TSNE(data, labels, save_path, save_name, one_hot_labels=True,
 
     if return_discrimination_value is True:
         return discrim_value
+
+
+def downward_propagation(activation, dbn, layer_index):
+    for li in range(layer_index, -1, -1):
+        layer = dbn['layer_{}'.format(li)]
+        if layer.layer_type == 'gr' or layer.layer_type == 'gb':
+            activation = tf.matmul(activation, tf.constant(layer.weights), transpose_b=True) + tf.constant(layer.vbiases)
+        elif layer.layer_type == 'bb':
+            activation = sampling.sampling(sampling.probs_v_given_h(activation,
+                                                                    tf.constant(layer.weights),
+                                                                    tf.constant(layer.vbiases)))
+        else:
+            raise TypeError('Layer type not implemented yet')
+    return activation
 
 
 #######################################################

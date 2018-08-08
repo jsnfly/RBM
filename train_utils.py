@@ -141,6 +141,7 @@ def get_best_learning_rate(batch, layer_type, etas, CD_steps,
 
 ###################################################################
 
+
 ###################################################################
 # other functions used for training:
 def upward_propagation(batch, DBN, layer_index, get_activations=False):
