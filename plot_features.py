@@ -24,7 +24,8 @@ def load_dbn(file_path):
 
 
 def main():
-    dbn_path = '/home/jonas/HDD/DBN_MNIST_runs/Runs_equal_size_NEW/run_8/DBN.pickle'
+    tf.reset_default_graph()
+    dbn_path = '/home/jonas/PycharmProjects/RBM/GR_MNIST1/dbn.pickle'
     dbn = load_dbn(dbn_path)
 
     # # plot features with receptive field approach
@@ -39,30 +40,32 @@ def main():
     #     plt.show()
 
     # plot features with downward propagation
-    layer_index = 28
-    num_runs = 400
+    layer_index = 2
+    num_runs = 1
     layer = dbn['layer_{}'.format(layer_index)]
 
     activation_placeholder = tf.placeholder(tf.float32)
     input_activation = downward_propagation(activation_placeholder, dbn, layer_index)
-
     with tf.Session() as sess:
         fig, axes = plt.subplots(4, 4)
-        # fig.subplots_adjust(hspace=0.05, wspace=0.05)
-        for ax in axes.flat:
-            i = np.random.choice(range(layer.num_hunits), replace=False)
-            activation = np.zeros(shape=[1, layer.num_hunits]).astype(np.float32)
-            activation[0, i] = 1.0
-            result = np.zeros((1, dbn['layer_0'].num_vunits))
-            for r in range(num_runs):
-                res = sess.run(input_activation, feed_dict={activation_placeholder: activation})
-                result = np.add(result, res)
-            result = result/num_runs
-            ax.imshow(result.reshape([28, 28]), cmap='seismic')
+        inds = np.random.choice(range(layer.num_hunits), size=16, replace=False)
+        for c, ax in enumerate(axes.flat):
+            i = inds[c]
+            activation = np.zeros(shape=[num_runs, layer.num_hunits]).astype(np.float32)
+            activation[:, i] = 1.0
+            result = sess.run(input_activation, feed_dict={activation_placeholder: activation})
+            result = np.mean(result, axis=0)
+            # result = result/np.mean(result)
+            # result = 1/(1+np.exp(-200*result))
+            im = ax.imshow(result.reshape([28, 28]), cmap='seismic')
             ax.set_xticks([])
             ax.set_yticks([])
+        # fig.colorbar(im)
+        plt.tight_layout()
         plt.show()
     tf.reset_default_graph()
+
+# TODO: insert method with gradients
 
 
 if __name__ == '__main__':

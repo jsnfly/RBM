@@ -105,7 +105,8 @@ def downward_propagation(activation, dbn, layer_index):
     for li in range(layer_index, -1, -1):
         layer = dbn['layer_{}'.format(li)]
         if layer.layer_type == 'gr' or layer.layer_type == 'gb':
-            activation = tf.matmul(activation, tf.constant(layer.weights), transpose_b=True) + tf.constant(layer.vbiases)
+            activation = tf.matmul(activation, tf.constant(layer.weights), transpose_b=True) \
+                         + tf.constant(layer.vbiases)
         elif layer.layer_type == 'bb':
             activation = sampling.sampling(sampling.probs_v_given_h(activation,
                                                                     tf.constant(layer.weights),

@@ -20,7 +20,7 @@ def main():
     plt.show()
 
     # Set up Deep Belief Network
-    layer_sizes = [784, 256, 128, 32]
+    layer_sizes = [784, 512, 64, 16]
     layer_types = ['gr', 'gr', 'gr']
     mnist_dbn = generate_dbn(layer_sizes, layer_types)
 
