@@ -4,7 +4,6 @@ import make_datasets as make_ds
 import sampling
 
 
-###################################################################
 # contrastive divergence:
 def CD_step(layer_type, v0, vbias, hbias, W, log_sigma=None):
     '''
@@ -159,10 +158,10 @@ def upward_propagation(batch, DBN, layer_index, get_activations=False):
             batch = sampling.sampling(activation)
         elif layer.layer_type == 'gr':
             activation = tf.nn.relu(tf.matmul(batch, tf.constant(layer.weights)) + tf.constant(layer.hbiases))
-            #             activation = sampling.ReLU_h_given_v_gauss(batch,
-            #                                                        tf.constant(layer.weights),
-            #                                                        tf.constant(layer.hbiases),
-            #                                                        tf.constant(layer.log_sigmas))
+            # activation = sampling.ReLU_h_given_v_gauss(batch,
+            #                                            tf.constant(layer.weights),
+            #                                            tf.constant(layer.hbiases),
+            #                                            tf.constant(layer.log_sigmas))
             batch = activation
             if DBN['layer_{}'.format(li + 1)].layer_type == 'cb':
                 batch = tf.nn.sigmoid(batch)
