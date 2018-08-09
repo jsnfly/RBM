@@ -3,6 +3,8 @@ import tensorflow as tf
 import pickle
 from helper_functions import downward_propagation
 import matplotlib.pyplot as plt
+import os
+from pathlib import Path
 
 
 def visualize_features(dbn, layer_index, feature_index):
@@ -16,6 +18,9 @@ def visualize_features(dbn, layer_index, feature_index):
     return receptive_field
 
 
+# def calc_grads_wrt_input(dbn):
+
+
 def load_dbn(file_path):
     pickle_in = open(file_path, 'rb')
     dbn = pickle.load(pickle_in)
@@ -25,7 +30,8 @@ def load_dbn(file_path):
 
 def main():
     tf.reset_default_graph()
-    dbn_path = '/home/jonas/PycharmProjects/RBM/GR_MNIST1/dbn.pickle'
+    dbn_path = Path('GR_MNIST_sparse1_2/')
+    dbn_path = os.fspath(dbn_path / 'dbn.pickle')
     dbn = load_dbn(dbn_path)
 
     # # plot features with receptive field approach
@@ -40,6 +46,15 @@ def main():
     #     plt.show()
 
     # plot features with downward propagation
+
+    # # scale weights
+    # for li in range(0, len(dbn)):
+    #     scale_factor = 0.05 / np.mean(np.abs(dbn['layer_{}'.format(li)].weights)) / (li+1)
+    #     layer = dbn['layer_{}'.format(li)]
+    #     print(np.mean(np.abs(layer.weights)))
+    #     layer.set_weights(layer.weights*scale_factor)
+    #     print(np.mean(np.abs(layer.weights)))
+
     layer_index = 2
     num_runs = 1
     layer = dbn['layer_{}'.format(layer_index)]
@@ -47,12 +62,12 @@ def main():
     activation_placeholder = tf.placeholder(tf.float32)
     input_activation = downward_propagation(activation_placeholder, dbn, layer_index)
     with tf.Session() as sess:
-        fig, axes = plt.subplots(4, 4)
-        inds = np.random.choice(range(layer.num_hunits), size=16, replace=False)
+        fig, axes = plt.subplots(5, 5)
+        inds = np.random.choice(range(layer.num_hunits), size=25, replace=False)
         for c, ax in enumerate(axes.flat):
             i = inds[c]
             activation = np.zeros(shape=[num_runs, layer.num_hunits]).astype(np.float32)
-            activation[:, i] = 1.0
+            activation[:, i] = 100.0
             result = sess.run(input_activation, feed_dict={activation_placeholder: activation})
             result = np.mean(result, axis=0)
             # result = result/np.mean(result)

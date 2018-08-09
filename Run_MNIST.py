@@ -19,7 +19,7 @@ def load_mnist_data():
         x_test = np.load('MNIST_Data/test_data.npy')
         y_test = np.load('MNIST_Data/test_labels.npy')
 
-        print('MNIST/Data already existed, loaded files.')
+        print('MNIST/Data already exists, loaded files.')
 
     except IOError:
         if not os.path.exists('MNIST_Data'):

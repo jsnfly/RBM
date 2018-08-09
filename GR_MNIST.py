@@ -6,6 +6,7 @@ from RBM import RBM
 import os
 from pathlib import Path
 from Run_MNIST import load_mnist_data
+from plot_features import load_dbn
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
@@ -20,9 +21,16 @@ def main():
     plt.show()
 
     # Set up Deep Belief Network
-    layer_sizes = [784, 512, 64, 16]
+    layer_sizes = [784, 512, 64, 64]
     layer_types = ['gr', 'gr', 'gr']
+
     mnist_dbn = generate_dbn(layer_sizes, layer_types)
+
+    # # for loading old dbn for further training:
+    # # load dbn
+    # mnist_dbn = load_dbn('GR_MNIST1\\dbn.pickle')
+    # # reinitialize layers to retrain
+    # mnist_dbn['layer_2'] = RBM(64, 64, 'gr', 2)
 
     # Training parameters
     dbn_train_params = {
@@ -33,13 +41,13 @@ def main():
         'learning_rate': [0.005, 0.005, 0.005],  # learning rate at the begin of training
         'lr_decay': [(4, 0.5), (4, 0.5), (4, 0.5)],  # decay of learning rate (every epochs,decay factor)
         'summary_frequency': [250, 250, 250],  # write to summary every x batches
-        'sparsity_rate': [0.05, 0.05, 0.05],  # rate with which sparsity is enforced
-        'sparsity_goal': [0.35, 0.35, 0.35]  # goal activation probability
+        'sparsity_rate': [0.05, 0.04, 0.03],  # rate with which sparsity is enforced
+        'sparsity_goal': [1.0, 1.0, 1.0]  # goal activation probability
     }
 
     # Train DBN
-    summaries_path = Path('GR_MNIST1/')
-    for li in range(len(mnist_dbn)):
+    summaries_path = Path('GR_MNIST_sparse1_2/')
+    for li in range(0, len(mnist_dbn)):
         # set up layer summary path
         summary_path = summaries_path / 'layer_{}'.format(li)
 
