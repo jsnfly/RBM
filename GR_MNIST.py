@@ -21,8 +21,8 @@ def main():
     plt.show()
 
     # Set up Deep Belief Network
-    layer_sizes = [784, 512, 64, 64]
-    layer_types = ['gr', 'gr', 'gr']
+    layer_sizes = [784, 512, 256, 128, 64]
+    layer_types = ['gr', 'gr', 'gr', 'gr']
 
     mnist_dbn = generate_dbn(layer_sizes, layer_types)
 
@@ -34,19 +34,19 @@ def main():
 
     # Training parameters
     dbn_train_params = {
-        'epochs': [20, 20, 20],  # number of training epochs
-        'batch_size': [128, 128, 128],  # size of one training batch
-        'cd_steps': [1, 1, 1],  # number of CD training steps
-        'update_vbiases': [True, True, True],  # if false vbiases are set to zero throughout the training
-        'learning_rate': [0.005, 0.005, 0.005],  # learning rate at the begin of training
-        'lr_decay': [(4, 0.5), (4, 0.5), (4, 0.5)],  # decay of learning rate (every epochs,decay factor)
-        'summary_frequency': [250, 250, 250],  # write to summary every x batches
-        'sparsity_rate': [0.05, 0.04, 0.03],  # rate with which sparsity is enforced
-        'sparsity_goal': [1.0, 1.0, 1.0]  # goal activation probability
+        'epochs': [25, 25, 25, 25, 25],  # number of training epochs
+        'batch_size': [128, 128, 128, 128, 128],  # size of one training batch
+        'cd_steps': [1, 1, 1, 1, 1],  # number of CD training steps
+        'update_vbiases': [True, True, True, True, True],  # if false vbiases are set to zero throughout the training
+        'learning_rate': [0.005, 0.005, 0.005, 0.005, 0.005],  # learning rate at the begin of training
+        'lr_decay': [(4, 0.5), (4, 0.5), (4, 0.5), (4, 0.5), (4, 0.5)],  # decay of learning rate (every epochs,decay factor)
+        'summary_frequency': [250, 250, 250, 250, 250],  # write to summary every x batches
+        'sparsity_rate': [0.05, 0.04, 0.03, 0.02, 0.02],  # rate with which sparsity is enforced
+        'sparsity_goal': [1.0, 1.0, 1.0, 1.0, 1.0]  # goal activation probability
     }
 
     # Train DBN
-    summaries_path = Path('GR_MNIST_sparse1_2/')
+    summaries_path = Path('GR_MNIST_512_256_128_64/')
     for li in range(0, len(mnist_dbn)):
         # set up layer summary path
         summary_path = summaries_path / 'layer_{}'.format(li)

@@ -30,7 +30,7 @@ def load_dbn(file_path):
 
 def main():
     tf.reset_default_graph()
-    dbn_path = Path('GR_MNIST_sparse1_2/')
+    dbn_path = Path('GR_MNIST_sparse1_many_layers/')
     dbn_path = os.fspath(dbn_path / 'dbn.pickle')
     dbn = load_dbn(dbn_path)
 
@@ -47,15 +47,15 @@ def main():
 
     # plot features with downward propagation
 
-    # # scale weights
-    # for li in range(0, len(dbn)):
-    #     scale_factor = 0.05 / np.mean(np.abs(dbn['layer_{}'.format(li)].weights)) / (li+1)
-    #     layer = dbn['layer_{}'.format(li)]
-    #     print(np.mean(np.abs(layer.weights)))
-    #     layer.set_weights(layer.weights*scale_factor)
-    #     print(np.mean(np.abs(layer.weights)))
+    # scale weights
+    for li in range(0, len(dbn)):
+        # scale_factor = 0.05 / np.mean(np.abs(dbn['layer_{}'.format(li)].weights)) / (li+1)
+        layer = dbn['layer_{}'.format(li)]
+        print(np.mean(np.abs(layer.weights)))
+        # layer.set_weights(layer.weights*scale_factor)
+        # print(np.mean(np.abs(layer.weights)))
 
-    layer_index = 2
+    layer_index = 3
     num_runs = 1
     layer = dbn['layer_{}'.format(layer_index)]
 
@@ -79,8 +79,6 @@ def main():
         plt.tight_layout()
         plt.show()
     tf.reset_default_graph()
-
-# TODO: insert method with gradients
 
 
 if __name__ == '__main__':
