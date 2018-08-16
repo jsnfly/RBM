@@ -30,10 +30,11 @@ def load_dbn(file_path):
 
 def main():
     tf.reset_default_graph()
-    dbn_path = Path('GR_MNIST_sparse1_many_layers/')
+    dbn_path = Path('GR_MNIST_sparse1_2/')
     dbn_path = os.fspath(dbn_path / 'dbn.pickle')
     dbn = load_dbn(dbn_path)
 
+    print(dbn['layer_0'].num_hunits)
     # # plot features with receptive field approach
     # save_path = None
     # layer_index = 2
@@ -55,28 +56,28 @@ def main():
         # layer.set_weights(layer.weights*scale_factor)
         # print(np.mean(np.abs(layer.weights)))
 
-    layer_index = 3
+    layer_index = 0
     num_runs = 1
     layer = dbn['layer_{}'.format(layer_index)]
 
     activation_placeholder = tf.placeholder(tf.float32)
     input_activation = downward_propagation(activation_placeholder, dbn, layer_index)
     with tf.Session() as sess:
-        fig, axes = plt.subplots(5, 5)
-        inds = np.random.choice(range(layer.num_hunits), size=25, replace=False)
+        fig, axes = plt.subplots(4, 4, figsize=(2.895, 2.895))
+        inds = np.random.choice(range(layer.num_hunits), size=16, replace=False)
         for c, ax in enumerate(axes.flat):
             i = inds[c]
             activation = np.zeros(shape=[num_runs, layer.num_hunits]).astype(np.float32)
             activation[:, i] = 100.0
             result = sess.run(input_activation, feed_dict={activation_placeholder: activation})
             result = np.mean(result, axis=0)
-            # result = result/np.mean(result)
-            # result = 1/(1+np.exp(-200*result))
             im = ax.imshow(result.reshape([28, 28]), cmap='seismic')
             ax.set_xticks([])
             ax.set_yticks([])
         # fig.colorbar(im)
-        plt.tight_layout()
+        # plt.tight_layout()
+        plt.subplots_adjust(wspace=0.05, hspace=0.05)
+        plt.savefig(os.fspath('GR_MNIST_sparse1_2/features.svg'), format='svg')
         plt.show()
     tf.reset_default_graph()
 
