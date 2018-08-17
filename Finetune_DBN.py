@@ -1,91 +1,115 @@
 import numpy as np
-import pickle
-from tensorflow.python.keras.models import Model
-from tensorflow.python.keras.layers import Input, Dense, Dropout
-from tensorflow.python.keras.optimizers import Adam
-from tensorflow.python.keras import backend as K
-from Run_MNIST import load_mnist_data
-from plot_features import load_dbn
 import tensorflow as tf
-from pathlib import Path
 import os
-from RBM import RBM
 import matplotlib.pyplot as plt
+import pickle
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Dense, Dropout
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras import backend as K
+from Run_MNIST import load_mnist_data, threshold_data
+from helper_functions import load_dbn
+from pathlib import Path
 
 
-def finetune_dbn(dbn, train_data, train_labels, test_data, test_labels,
-                 optimizer='ADAM', epochs=10, batch_size=128,
-                 dropout_rate=0):
-    # Build feed-forward net from dbn:
-    a = Input(shape=(train_data.shape[1],))
-    layer = dbn['layer_0']
-    if layer.layer_type == 'gr' or 'cr':
+def keras_model_from_dbn(dbn, num_classes, dropout_rates, optimizer, use_hbiases=True):
+    """
+    create a keras feedforawrd network from a dbn
+    :param dbn: Deep belief network (list of RBM instances)
+    :param num_classes: number of different classes
+    :param dropout_rates: dropout rates for each layer (list of floats between 0 and 1)
+    :param optimizer: which optimizer to use for the fine-tuning
+    :param use_hbiases: whether to use the hidden biases from pre-training
+    :return: model instance
+    """
+    layer = dbn[0]
+    # build feed forward network
+
+    # input layer
+    a = Input(shape=(layer.num_vunits,))
+    if layer.layer_type == 'gr' or layer.layer_type == 'cr':
         activation = 'relu'
     else:
         activation = 'sigmoid'
-    x = Dense(units=layer.num_hunits, activation=activation, use_bias=True)(a)
-    if dropout_rate != 0:
-        x = Dropout(dropout_rate)(x)
-    for li in range(1, len(dbn)):
-        layer = dbn['layer_{}'.format(li)]
-        if layer.layer_type == 'gr' or 'cr':
+    x = Dense(units=layer.num_hunits, activation=activation, use_bias=use_hbiases)(a)
+    if dropout_rates[0] != 0:
+        x = Dropout(dropout_rates[0])(x)
+
+    # higher layers
+    for layer_index in range(1, len(dbn)):
+        layer = dbn[layer_index]
+        if layer.layer_type == 'gr' or layer.layer_type == 'cr':
             activation = 'relu'
         else:
             activation = 'sigmoid'
-        if layer.layer_type == 'cb' and dbn['layer_{}'.format(li - 1)] == 'gr':
-            x = tf.nn.sigmoid(x)
-        x = Dense(units=layer.num_hunits, activation=activation, use_bias=True)(x)
-        if dropout_rate != 0:
-            x = Dropout(dropout_rate)(x)
-    o = Dense(units=train_labels.shape[1], activation='softmax')(x)
-    weights_and_biases = []
-    for li in range(len(dbn)):
-        weights = dbn['layer_{}'.format(li)].weights
-        weights_and_biases.append(weights)
-        biases = np.squeeze(dbn['layer_{}'.format(li)].hbiases)
-        weights_and_biases.append(biases)
+        x = Dense(units=layer.num_hunits, activation=activation, use_bias=use_hbiases)(x)
+        if dropout_rates[layer_index] != 0:
+            x = Dropout(dropout_rates[layer_index])(x)
+
+    # softmax output layer
+    o = Dense(units=num_classes, activation='softmax')(x)
+
+    # create model
     model = Model(inputs=a, outputs=o)
-    model.set_weights(weights_and_biases)
+
+    # set model weights (and biases if bool is True) to dbn parameters
+    dbn_weights = []
+    for layer_index in range(len(dbn)):
+        layer = dbn[layer_index]
+
+        weights = layer.weights
+        dbn_weights.append(weights)
+
+        if use_hbiases is True:
+            hbiases = layer.hbiases
+            dbn_weights.append(np.squeeze(hbiases))
+    model.set_weights(dbn_weights)
+
+    # compile model
     model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
+
+    return model
+
+
+def main():
+    # load dbn
+    dbn_path = 'Test1/'
+    dbn = load_dbn(dbn_path + 'dbn.pickle')
+
+    # load data
+    (x_train, y_train), (x_test, y_test) = load_mnist_data()
+
+    # threshold data
+    x_train = threshold_data(x_train, 0.5 * 255)
+    x_test = threshold_data(x_test, 0.5 * 255)
+
+    # make one hot labels
+    y_train = to_categorical(y_train)
+    y_test = to_categorical(y_test)
+
+    # set up model
+    num_classes = 10
+    dropout_rates = [0.5, 0.5, 0.5]
+    optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
+    model = keras_model_from_dbn(dbn, num_classes, dropout_rates, optimizer, use_hbiases=True)
     model.summary()
 
-    # Train model:
-    history = model.fit(x=train_data, y=train_labels, batch_size=batch_size, epochs=epochs,
-                        validation_data=(test_data, test_labels))
-    K.clear_session()
-    return history
+    # train model:
+    batch_size = 128
+    epochs = 50
+    history = model.fit(x=x_train,
+                        y=y_train,
+                        batch_size=batch_size,
+                        epochs=epochs,
+                        validation_data=(x_test, y_test),
+                        verbose=2)
+
+    plt.plot(history.history['acc'], label='Train Acc')
+    plt.plot(history.history['val_acc'], label='Test Acc')
+    plt.show()
 
 
-# load MNIST data
-(x_train, y_train), (x_test, y_test) = load_mnist_data()
+if __name__ == '__main__':
+    main()
 
-# make one hot
-y_train = tf.one_hot(y_train, depth=10)
-y_test = tf.one_hot(y_test, depth=10)
-
-# load dbn for finetuning
-dbn_path = Path('GR_MNIST_512_256_128_64/dbn.pickle')
-dbn_path = os.fspath(dbn_path)
-dbn = load_dbn(dbn_path)
-
-# print weight absolute values
-for li in range(len(dbn)):
-    print(np.mean(np.abs(dbn['layer_{}'.format(li)].weights)))
-
-# # scale weights
-# dbn['layer_0'].weights = dbn['layer_0'].weights*12
-# dbn['layer_1'].weights = dbn['layer_1'].weights*5
-# dbn['layer_2'].weights = dbn['layer_2'].weights*1.5
-
-optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
-
-history = finetune_dbn(dbn,
-                       x_train[:int(0.05*x_train.shape[0]), :],
-                       y_train[:int(0.05*y_train.shape[0]), :],
-                       x_test,
-                       y_test,
-                       optimizer, 100, 128, dropout_rate=0.4)
-
-finetune_acc = history.history['val_acc']
-plt.plot(finetune_acc)
-plt.show()
