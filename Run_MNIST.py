@@ -71,25 +71,25 @@ def main():
     plt.show()
 
     # Set up Deep Belief Network
-    layer_sizes = [784, 500, 500, 500, 500, 500, 500, 500, 500, 500, 500]
-    layer_types = ['bb', 'bb', 'bb', 'bb', 'bb', 'bb', 'bb', 'bb', 'bb', 'bb']
+    layer_sizes = [784, 500, 500, 500]
+    layer_types = ['bb', 'bb', 'bb']
     mnist_dbn = generate_dbn(layer_sizes, layer_types)
 
     # Training parameters
     dbn_train_params = {
-        'epochs': [32, 32, 32, 32, 32, 32, 32, 32, 32, 32],  # number of training epochs
-        'batch_size': [128, 128, 128, 128, 128, 128, 128, 128, 128, 128],  # size of one training batch
-        'cd_steps': [1, 1, 1, 1, 1, 1, 1, 1, 9, 10],  # number of CD training steps
-        'update_vbiases': [True, False, False, False, False, False, False, False, False, False],  # if false vbiases are set to zero throughout the training
-        'learning_rate': [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2],  # learning rate at the begin of training
-        'lr_decay': [(5, 0.5), (5, 0.5), (5, 0.5), (5, 0.5), (5, 0.5), (5, 0.5), (5, 0.5), (5, 0.5), (5, 0.5), (5, 0.5)],  # decay of learning rate (every epochs,decay factor)
-        'summary_frequency': [250, 250, 250, 250, 250, 250, 250, 250, 250, 250],  # write to summary every x batches
+        'epochs': [32, 32, 32],  # number of training epochs
+        'batch_size': [128, 128, 128],  # size of one training batch
+        'cd_steps': [1, 1, 1],  # number of CD training steps
+        'update_vbiases': [True, False, False],  # if false vbiases are set to zero throughout the training
+        'learning_rate': [0.2, 0.2, 0.2],  # learning rate at the begin of training
+        'lr_decay': [(5, 0.5), (5, 0.5), (5, 0.5)],  # decay of learning rate (every epochs,decay factor)
+        'summary_frequency': [250, 250, 250],  # write to summary every x batches
         'sparsity_rate': [0.0, 0.0, 0.0],  # rate with which sparsity is enforced
         'sparsity_goal': [0.0, 0.0, 0.0]  # goal activation probability
     }
 
     # Train DBN
-    summaries_path = 'Test2/'
+    summaries_path = 'Test1/'
 
     for li in range(len(mnist_dbn)):
         # set up layer summary path
@@ -133,4 +133,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    plt.show()
