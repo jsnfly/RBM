@@ -32,36 +32,9 @@ class RBM:
             # initialize logarithmic standard deviation (z = log(sigma**2))
             self.log_sigmas = np.random.normal(loc=1.0, scale=0.01, size=(1, num_vunits)).astype(np.float32)
 
-    def set_weights(self, weights):
-        # initialize weights of RBM to some matrix of shape [num_vunits,num_hunits]
-        if weights.shape != (self.num_vunits, self.num_hunits):
-            print('Weights need to be shape [num_vunits, num_hunits]!')
-            print('Weights not initialized!')
-        else:
-            self.weights = weights
-            print('Weights initialized.')
-
-    def set_vbiases(self, vbiases):
-        # initialize vbiases of RBM to some matrix of shape [1,num_vunits]
-        if vbiases.shape != (1, self.num_vunits):
-            print('Visual biases need to be shape [1, num_vunits]!')
-            print('Visual biases not initialized!')
-        else:
-            self.vbiases = vbiases
-            print('Visubal biases initialized.')
-
-    def set_hbiases(self, hbiases):
-        # initialize vbiases of RBM to some matrix of shape [1,num_vunits]
-        if hbiases.shape != (1, self.num_hunits):
-            print('Hidden biases need to be shape [1, num_hunits]!')
-            print('Hidden biases not initialized!')
-        else:
-            self.hbiases = hbiases
-            print('Hidden biases initialized.')
-
-    def train_RBM(self, train_data, epochs=10, batch_size=32, summary_path=None, summary_frequency=10,
-                  DBN=None, update_vbiases=True, start_learning_rate=0.01, learning_rate_decay=(10, 1.0),
-                  CD_steps=1, sparsity_rate=0.0, sparsity_goal=0.1, keys=None, data_types=None):
+    def train_rbm(self, train_data, epochs=10, batch_size=32, summary_path=None, summary_frequency=10,
+                  dbn=None, update_vbiases=True, start_learning_rate=0.01, learning_rate_decay=(10, 1.0),
+                  cd_steps=1, sparsity_rate=0.0, sparsity_goal=0.1, keys=None, data_types=None):
 
         # set up summary writer
         if summary_path:
@@ -80,7 +53,7 @@ class RBM:
                                                            shuffle_buffer=100000,
                                                            parallel_reads=len(train_data), num_cores=8)
         else:
-            raise TypeError('train_data needs to be either numpy array or list of file paths')
+            raise TypeError('train_data needs to be either numpy array or list of TFRecord file paths')
 
         # initializable iterator
         iterator = tf.data.Iterator.from_structure(train_dataset.output_types, train_dataset.output_shapes)
@@ -95,8 +68,8 @@ class RBM:
         # define initialization operation
         train_init_op = iterator.make_initializer(train_dataset)
 
-        # if RBM is part of DBN: upward propagation of inputs
-        v0_ = train_utils.upward_propagation(batch, DBN, self.layer_index)
+        # if RBM is part of dbn: upward propagation of inputs
+        v0_ = train_utils.upward_propagation(batch, dbn, self.layer_index)
 
         # set up variables for training:
         # global step defines epoch for learning rate decay
@@ -142,11 +115,11 @@ class RBM:
         # contrastive divergence procedure:
         with tf.name_scope('CD'):
             if self.layer_type == 'gb' or self.layer_type == 'gr':
-                h0_, h0, vn_, vn, hn_ = train_utils.CD_procedure(v0_, self.layer_type, CD_steps,
+                h0_, h0, vn_, vn, hn_ = train_utils.cd_procedure(v0_, self.layer_type, cd_steps,
                                                                  train_vbiases, train_hbiases,
                                                                  train_weights, train_log_sigmas)
             else:
-                h0_, h0, vn_, vn, hn_ = train_utils.CD_procedure(v0_, self.layer_type, CD_steps,
+                h0_, h0, vn_, vn, hn_ = train_utils.cd_procedure(v0_, self.layer_type, cd_steps,
                                                                  train_vbiases, train_hbiases, train_weights)
 
         with tf.name_scope('calculate_error'):
@@ -171,6 +144,7 @@ class RBM:
                     delta_vbiases = deltas.delta_vbiases(v0_, vn_, train_log_sigmas)
                 else:
                     delta_vbiases = tf.zeros_like(train_vbiases)
+
                 delta_hbiases = deltas.delta_hbiases(h0_, hn_) - sparsity_rate * h_sparse_term
                 delta_weights = deltas.delta_weights(v0_, h0_, vn_, hn_,
                                                      train_log_sigmas) - sparsity_rate * w_sparse_term
@@ -202,7 +176,13 @@ class RBM:
                 assign_ops.append(assign_vbiases)
 
         # Tensorflow session to execute graph:
-        with tf.Session() as sess:
+
+        # session config
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+
+        # start session
+        with tf.Session(config=config) as sess:
             # initialize all training variables
             sess.run(tf.global_variables_initializer())
             # finalize graph to prevent adding to it unintentionally
