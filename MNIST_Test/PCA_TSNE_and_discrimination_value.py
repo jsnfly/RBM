@@ -1,10 +1,11 @@
-from helper_functions import *
-from Run_MNIST import load_mnist_data, threshold_data
-import dimensionless_disrcrimination_value as ddv
+import evaluate.dimensionless_disrcrimination_value as ddv
+from evaluate.helper_functions import *
+from evaluate.plot import *
+from MNIST_Test.Run_MNIST import load_mnist_data, threshold_data
 
 dbn_path = 'Test1/dbn.pickle'
 dbn = load_dbn(dbn_path)
-save_path = 'Test1/'
+save_path = 'Test1/pca_and_tsne/'
 
 (x_train, y_train), (x_test, y_test) = load_mnist_data()
 # threshold data
@@ -13,7 +14,7 @@ x_test = threshold_data(x_test, 0.5 * 255)
 
 # make samples indices
 np.random.seed(420)
-test_indices = make_sample_indices(x_test, 1000)
+test_indices = make_sample_indices(x_test, 500)
 
 test_samples = x_test[test_indices]
 test_labels = y_test[test_indices]
@@ -39,7 +40,7 @@ discrimination_value = ddv.discrimination_value(test_samples,
 discrimination_values.append(discrimination_value)
 
 # calculate layerwies activations
-layer_activations = layerwise_activations(dbn, test_samples, num_activations=200)
+layer_activations = layerwise_activations(dbn, test_samples, num_activations=100)
 
 # make and plot pca and tsne for higher layers, calculate discrimination value
 for layer_index in range(len(dbn)):

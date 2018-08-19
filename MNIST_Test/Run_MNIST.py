@@ -3,7 +3,7 @@ import numpy as np
 import pickle
 import os
 import matplotlib.pyplot as plt
-from helper_functions import *
+from evaluate.helper_functions import generate_dbn, extract_value
 
 # restrict tensorflow to only one GPU
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
@@ -71,7 +71,7 @@ def main():
     plt.show()
 
     # Set up Deep Belief Network
-    layer_sizes = [784, 500, 500, 500]
+    layer_sizes = [784, 128, 128, 128]
     layer_types = ['bb', 'bb', 'bb']
     mnist_dbn = generate_dbn(layer_sizes, layer_types)
 

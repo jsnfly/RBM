@@ -1,11 +1,8 @@
 import numpy as np
 import tensorflow as tf
-import train_utils
-import deltas
-import make_datasets as make_ds
-
-if __name__ == '__main__':
-    print('Using Tensorflow version: ', tf.__version__)
+import train.train_utils as train_utils
+import train.deltas as deltas
+import train.make_datasets as make_ds
 
 
 class RBM:

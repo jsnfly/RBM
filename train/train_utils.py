@@ -1,5 +1,5 @@
 import tensorflow as tf
-import sampling
+import train.sampling as sampling
 
 
 # contrastive divergence:
