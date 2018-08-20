@@ -41,18 +41,18 @@ def cd_step(layer_type, v, vbiases, hbiases, weights, log_sigmas=None):
         hn_ = sampling.probs_h_given_v_gauss(vn, weights, hbiases, log_sigmas)
 
     elif layer_type == 'gr':
-        h0_ = sampling.ReLU_h_given_v_gauss(v, weights, hbiases, log_sigmas)
+        h0_ = sampling.relu_h_given_v_gauss(v, weights, hbiases, log_sigmas)
         h0 = h0_
         vn_ = sampling.v_gauss_given_h(h0, weights, vbiases, log_sigmas)
         vn = vn_
-        hn_ = sampling.ReLU_h_given_v_gauss(vn, weights, hbiases, log_sigmas)
+        hn_ = sampling.relu_h_given_v_gauss(vn, weights, hbiases, log_sigmas)
 
     elif layer_type == 'cr':
-        h0_ = sampling.ReLU_h_given_v_cont(v, weights, hbiases)
+        h0_ = sampling.relu_h_given_v(v, weights, hbiases)
         h0 = h0_
         vn_ = sampling.v_cont_given_h(h0, weights, vbiases)
         vn = vn_
-        hn_ = sampling.ReLU_h_given_v_cont(vn, weights, hbiases)
+        hn_ = sampling.relu_h_given_v(vn, weights, hbiases)
     else:
         raise TypeError('Given Layer Type is not supported')
     return h0_, h0, vn_, vn, hn_

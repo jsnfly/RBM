@@ -14,7 +14,7 @@ def delta_weights(v0, h0, vn, hn, log_sigmas=None):
     delta_w = (tf.matmul(v0, h0, transpose_a=True) -
                tf.matmul(vn, hn, transpose_a=True)) / tf.cast(tf.shape(v0)[0], tf.float32)
     if log_sigmas is not None:
-        delta_w = tf.divide(delta_weights, tf.transpose(tf.exp(log_sigmas)))
+        delta_w = tf.divide(delta_w, tf.transpose(tf.exp(log_sigmas)))
     return delta_w
 
 
@@ -28,7 +28,7 @@ def delta_vbiases(v0, vn, log_sigmas=None):
     """
     delta_vb = tf.reduce_mean(v0 - vn, axis=0, keepdims=True)
     if log_sigmas is not None:
-        delta_vb = tf.divide(delta_vbiases, tf.exp(log_sigmas))
+        delta_vb = tf.divide(delta_vb, tf.exp(log_sigmas))
     return delta_vb
 
 
