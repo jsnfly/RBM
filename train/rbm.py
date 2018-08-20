@@ -206,7 +206,12 @@ class RBM:
                 # assign new parameters after each epoch:
                 self.vbiases = sess.run(train_vbiases)
                 self.hbiases = sess.run(train_hbiases)
-                self.weights = sess.run(train_weights)
+                if self.layer_type == 'gr':
+                    w = sess.run(train_weights)
+                    scale_factor = 0.01 / np.mean(np.abs(w))
+                    self.weights = scale_factor*w
+                else:
+                    self.weights = sess.run(train_weights)
                 if self.layer_type == 'gb' or self.layer_type == 'gr':
                     self.log_sigmas = sess.run(train_log_sigmas)
         if summary_path:

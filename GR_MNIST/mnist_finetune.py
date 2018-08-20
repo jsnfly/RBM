@@ -12,15 +12,15 @@ from tensorflow.keras import backend as K
 # from pathlib import Path
 
 
-save_path = os.path.join('Test1', 'finetune/')
+save_path = os.path.join('Test_finetune_smaller_layers_no_scale', 'finetune/')
 
 # load dbn
-dbn_path = 'Test1/'
+dbn_path = 'Test_finetune_smaller_layers_no_scale/'
 dbn = load_dbn(dbn_path + 'dbn.pickle')
 
 # scale weights of dbn
 for c, layer in enumerate(dbn):
-    scale_factor = 0.02/(c+1)/np.mean(np.abs(layer.weights))
+    scale_factor = 0.04/(c+1)/np.mean(np.abs(layer.weights))
     layer.weights = scale_factor*layer.weights
     print(np.mean(np.abs(layer.weights)))
 
@@ -37,14 +37,14 @@ y_test = to_categorical(y_test)
 
 # set up model
 num_classes = 10
-dropout_rates = [0.5, 0.5, 0.5]
+dropout_rates = [0.5, 0.4, 0.3, 0.2]
 optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
 model = keras_model_from_dbn(dbn, num_classes, dropout_rates, optimizer, use_hbiases=True)
 model.summary()
 
 # train model:
 batch_size = 128
-epochs = 50
+epochs = 200
 history = model.fit(x=x_train[:3000],
                     y=y_train[:3000],
                     batch_size=batch_size,
@@ -69,7 +69,7 @@ finetune_test_acc = history.history['val_acc']
 num_classes = 10
 layer_sizes = [dbn[0].num_vunits]
 layer_sizes = layer_sizes + [layer.num_hunits for layer in dbn]
-dropout_rates = [0.5, 0.5, 0.5]
+dropout_rates = [0.5, 0.4, 0.3, 0.2]
 optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.0, amsgrad=False)
 model = feedforward_network(layer_sizes=layer_sizes,
                             dropout_rates=dropout_rates,
@@ -80,7 +80,7 @@ model.summary()
 
 # train model:
 batch_size = 128
-epochs = 50
+epochs = 200
 history = model.fit(x=x_train[:3000],
                     y=y_train[:3000],
                     batch_size=batch_size,

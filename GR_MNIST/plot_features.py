@@ -6,11 +6,11 @@ from pathlib import Path
 
 
 def main():
-    dbn_path = Path('Test1/')
+    dbn_path = Path('Test_finetune_smaller_layers_no_scale/')
     dbn_path = os.fspath(dbn_path / 'dbn.pickle')
     dbn = load_dbn(dbn_path)
 
-    save_path = 'Test1/features/'
+    save_path = 'Test_finetune_smaller_layers_no_scale/features/'
     for layer_index in range(len(dbn)):
         layer = dbn[layer_index]
         inds = np.random.choice(range(layer.num_hunits), size=16, replace=False)
@@ -18,7 +18,7 @@ def main():
         # plot features with downward propagate approach
         receptive_fields = downward_propagate_features(dbn, layer_index, inds,
                                                        num_runs=1,
-                                                       num_neurons=20,
+                                                       num_neurons=4,
                                                        activation_value=100.0)
         fig, axes = plt.subplots(4, 4, figsize=(2.895, 2.895))
         for c, ax in enumerate(axes.flat):

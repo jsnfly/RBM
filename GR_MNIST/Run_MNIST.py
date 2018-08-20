@@ -68,25 +68,25 @@ def main():
     plt.show()
 
     # Set up Deep Belief Network
-    layer_sizes = [784, 512, 512, 512]
-    layer_types = ['gr', 'gr', 'gr']
+    layer_sizes = [784, 512, 256, 128, 64]
+    layer_types = ['gr', 'gr', 'gr', 'gr', 'gr', 'gr']
     mnist_dbn = generate_dbn(layer_sizes, layer_types)
 
     # Training parameters
     dbn_train_params = {
-        'epochs': [32, 32, 32],  # number of training epochs
-        'batch_size': [128, 128, 128],  # size of one training batch
-        'cd_steps': [1, 1, 1],  # number of CD training steps
-        'update_vbiases': [True, True, True],  # if false vbiases are set to zero throughout the training
-        'learning_rate': [0.01, 0.01, 0.01],  # learning rate at the begin of training
-        'lr_decay': [(5, 0.5), (5, 0.5), (5, 0.5)],  # decay of learning rate (every epochs,decay factor)
-        'summary_frequency': [250, 250, 250],  # write to summary every x batches
-        'sparsity_rate': [0.05, 0.05, 0.05],  # rate with which sparsity is enforced
-        'sparsity_goal': [1.0, 1.0, 1.0]  # goal activation probability
+        'epochs': [42, 42, 42, 42, 42, 42],  # number of training epochs
+        'batch_size': [128, 128, 128, 128, 128, 128],  # size of one training batch
+        'cd_steps': [1, 1, 1, 1, 1, 1],  # number of CD training steps
+        'update_vbiases': [True, True, True, True, True, True],  # if false vbiases are set to zero throughout the training
+        'learning_rate': [0.01, 0.01, 0.01, 0.01, 0.01, 0.01],  # learning rate at the begin of training
+        'lr_decay': [(5, 0.5), (5, 0.5), (5, 0.5), (5, 0.5), (5, 0.5), (5, 0.5)],  # decay of learning rate (every epochs,decay factor)
+        'summary_frequency': [250, 250, 250, 250, 250, 250],  # write to summary every x batches
+        'sparsity_rate': [0.05, 0.01, 0.01, 0.01, 0.05, 0.05],  # rate with which sparsity is enforced
+        'sparsity_goal': [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]  # goal activation probability
     }
 
     # Train DBN
-    summaries_path = 'Test1/'
+    summaries_path = 'Test_finetune_smaller_layers_no_scale/'
 
     for li in range(len(mnist_dbn)):
         # set up layer summary path

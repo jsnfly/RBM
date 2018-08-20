@@ -71,7 +71,7 @@ def main():
     plt.show()
 
     # Set up Deep Belief Network
-    layer_sizes = [784, 128, 128, 128]
+    layer_sizes = [784, 512, 512, 512]
     layer_types = ['bb', 'bb', 'bb']
     mnist_dbn = generate_dbn(layer_sizes, layer_types)
 
@@ -80,8 +80,8 @@ def main():
         'epochs': [32, 32, 32],  # number of training epochs
         'batch_size': [128, 128, 128],  # size of one training batch
         'cd_steps': [1, 1, 1],  # number of CD training steps
-        'update_vbiases': [True, False, False],  # if false vbiases are set to zero throughout the training
-        'learning_rate': [0.2, 0.2, 0.2],  # learning rate at the begin of training
+        'update_vbiases': [True, True, True],  # if false vbiases are set to zero throughout the training
+        'learning_rate': [0.3, 0.3, 0.3],  # learning rate at the begin of training
         'lr_decay': [(5, 0.5), (5, 0.5), (5, 0.5)],  # decay of learning rate (every epochs,decay factor)
         'summary_frequency': [250, 250, 250],  # write to summary every x batches
         'sparsity_rate': [0.0, 0.0, 0.0],  # rate with which sparsity is enforced

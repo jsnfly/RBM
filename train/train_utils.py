@@ -110,12 +110,12 @@ def upward_propagation(batch, dbn, layer_index, get_activations=False):
 
         elif layer.layer_type == 'gr':
             # TODO: Check this:
-            # # alternative without log_sigmas (works, but does it work better?):
-            # activation = tf.nn.relu(tf.matmul(batch, tf.constant(layer.weights)) + tf.constant(layer.hbiases))
+            # alternative without log_sigmas (works, but does it work better?):
+            activation = tf.nn.relu(tf.matmul(batch, tf.constant(layer.weights)) + tf.constant(layer.hbiases))
 
-            activation = tf.nn.relu(tf.matmul(tf.divide(batch, tf.exp(tf.constant(layer.log_sigmas))),
-                                              tf.constant(layer.weights))
-                                    + tf.constant(layer.hbiases))
+            # activation = tf.nn.relu(tf.matmul(tf.divide(batch, tf.exp(tf.constant(layer.log_sigmas))),
+            #                                   tf.constant(layer.weights))
+            #                         + tf.constant(layer.hbiases))
             batch = activation
         else:
             # TODO: add remaining layer type (cr)

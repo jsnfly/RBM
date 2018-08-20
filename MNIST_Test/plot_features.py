@@ -18,7 +18,7 @@ def main():
         # plot features with downward propagate approach
         receptive_fields = downward_propagate_features(dbn, layer_index, inds,
                                                        num_runs=1000,
-                                                       num_neurons=5,
+                                                       num_neurons=25,
                                                        activation_value=1.0)
         fig, axes = plt.subplots(4, 4, figsize=(2.895, 2.895))
         for c, ax in enumerate(axes.flat):
