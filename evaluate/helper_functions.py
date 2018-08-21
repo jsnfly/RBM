@@ -6,6 +6,7 @@ import train.train_utils as train_utils
 import train.make_datasets as make_ds
 import matplotlib.pyplot as plt
 from train.rbm import RBM
+from scipy.signal import savgol_filter
 
 font = {'family':   'sans-serif',
         'weight':   'medium',
@@ -157,3 +158,28 @@ def downward_propagate_features(dbn, layer_index, feature_indices, num_runs=1, n
             receptive_fields.append(result)
     tf.reset_default_graph()
     return receptive_fields
+
+
+def plot_class_activations(save_path, dbn, data, labels, num_activations, one_hot=True):
+
+    if one_hot is True:
+        classes = np.argmax(labels, axis=1)
+    else:
+        classes = labels
+
+    num_classes = np.amax(classes)+1
+
+    fig, axes = plt.subplots(1, len(dbn), figsize=(5.79, 3.79))
+    for c in range(num_classes):
+        cls_indices = np.where(classes == c)[0]
+        cls_samples = data[cls_indices]
+        cls_activations = layerwise_activations(dbn, cls_samples, num_activations)
+        for li, layer_act in enumerate(cls_activations):
+            smooth_act = savgol_filter(np.mean(layer_act, axis=0), 15, 3)
+            axes.flat[li].plot(smooth_act, label='class {}'.format(c), alpha=1.0)
+
+    for li,ax in enumerate(axes.flat):
+        ax.set_title('Layer {}'.format(li))
+        ax.legend()
+    plt.savefig(save_path + 'layerwise_activations.png', format='png')
+    plt.show()
