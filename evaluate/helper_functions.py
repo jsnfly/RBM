@@ -169,17 +169,18 @@ def plot_class_activations(save_path, dbn, data, labels, num_activations, one_ho
 
     num_classes = np.amax(classes)+1
 
-    fig, axes = plt.subplots(1, len(dbn), figsize=(5.79, 3.79))
+    figs = [plt.figure(li, figsize=(5.79, 5.79)) for li in range(len(dbn))]
     for c in range(num_classes):
         cls_indices = np.where(classes == c)[0]
         cls_samples = data[cls_indices]
         cls_activations = layerwise_activations(dbn, cls_samples, num_activations)
         for li, layer_act in enumerate(cls_activations):
-            smooth_act = savgol_filter(np.mean(layer_act, axis=0), 15, 3)
-            axes.flat[li].plot(smooth_act, label='class {}'.format(c), alpha=1.0)
+            plt.figure(li)
+            smooth_act = savgol_filter(np.mean(layer_act, axis=0), 5, 3)
+            plt.plot(smooth_act, label='class {}'.format(c), alpha=0.5)
 
-    for li,ax in enumerate(axes.flat):
-        ax.set_title('Layer {}'.format(li))
-        ax.legend()
-    plt.savefig(save_path + 'layerwise_activations.png', format='png')
-    plt.show()
+    for li in range(len(dbn)):
+        plt.figure(li)
+        plt.legend()
+        plt.savefig(save_path + 'activations_layer{}.png'.format(li), format='png')
+        plt.close(li)

@@ -53,7 +53,9 @@ def keras_model_from_dbn(dbn, num_classes, dropout_rates, optimizer, use_hbiases
 
         if use_hbiases is True:
             hbiases = layer.hbiases
-            dbn_weights.append(np.squeeze(hbiases))
+        else:
+            hbiases = np.zeros_like(layer.hbiases, dtype=np.float32)
+        dbn_weights.append(np.squeeze(hbiases))
     model.set_weights(dbn_weights)
 
     # compile model

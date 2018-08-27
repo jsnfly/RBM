@@ -57,7 +57,10 @@ class RBM:
 
         # get batches from datasets
         if isinstance(train_data, list):
-            batch, label_batch = iterator.get_next()
+            try:
+                batch, label_batch = iterator.get_next()
+            except ValueError:
+                batch = iterator.get_next()[0]
 
         else:
             batch = iterator.get_next()
