@@ -1,3 +1,5 @@
+import sys
+sys.path.append('..')
 import os
 import pickle
 import numpy as np
@@ -11,7 +13,6 @@ from tensorflow.python.client import device_lib
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
 # print(device_lib.list_local_devices())
 
 
@@ -120,7 +121,7 @@ num_time_steps = 60
 LSTM_size = 64
 num_x_signals = 120
 num_labels = 5
-batch_size = 8
+batch_size = 64
 
 # cut all datasets to have a (whole number * batch_size * time_steps) samples:
 num_samples_batch = batch_size * num_time_steps
@@ -201,7 +202,7 @@ for s, l in zip(all_val_samples, all_val_labels):
 lengths_train_datasets = [d.shape[0] for d in all_train_samples]
 lengths_val_datasets = [d.shape[0] for d in all_val_samples]
 
-epochs = 200
+epochs = 500
 
 train_accuracies = []
 test_accuracies = []
@@ -212,7 +213,7 @@ model.add(LSTM(units=LSTM_size, return_sequences=True, batch_input_shape=(batch_
                dropout=0.50, recurrent_dropout=0, stateful=True))
 model.add(TimeDistributed(Dense(5, activation='softmax')))
 
-optimizer = Adam(0.0001)
+optimizer = Adam(0.001)
 model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 model.summary()
 
@@ -240,12 +241,12 @@ for epoch in range(epochs):
     test_losses = []
     test_accs = []
     for d, length in enumerate(lengths_val_datasets):
-        train_samples = all_val_samples[d]
-        train_labels = all_val_labels[d]
+        val_samples = all_val_samples[d]
+        val_labels = all_val_labels[d]
         num_samples = length // batch_size
         for i in range(num_samples):
-            x_batch = train_samples[i * batch_size:(i + 1) * batch_size]
-            y_batch = train_labels[i * batch_size:(i + 1) * batch_size]
+            x_batch = val_samples[i * batch_size:(i + 1) * batch_size]
+            y_batch = val_labels[i * batch_size:(i + 1) * batch_size]
             test_loss, test_acc = model.test_on_batch(x_batch, y_batch)
             test_losses.append(test_loss)
             test_accs.append(test_acc)
