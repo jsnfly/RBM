@@ -3,29 +3,16 @@ sys.path.append('..')
 import os
 import pickle
 import numpy as np
-import tensorflow as tf
-import train.make_datasets as make_ds
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense, TimeDistributed
 from tensorflow.keras import backend as K
 from tensorflow.keras.optimizers import Adam
+from lstm_helper_functions import *
 from tensorflow.python.client import device_lib
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-# print(device_lib.list_local_devices())
-
-
-def make_batches(sample_array, batch_size):
-    sample_batches = []
-    num_batches = sample_array.shape[0] // batch_size
-    for batch_counter in range(num_batches):
-        batch_samples = [sample_array[sample_counter * num_batches + batch_counter, :, :] for sample_counter in
-                         range(batch_size)]
-        batch = np.stack(batch_samples)
-        sample_batches.append(batch)
-    return sample_batches
-
+# print(device_lib.list_local_devices()
 
 # get training and validation files
 load_path = '/home/jonas/HDD/data/unwindowed/unwindowed_Fourier-transformed/'
@@ -55,59 +42,8 @@ validation_files = sorted(validation_files)
 print(len(training_files))
 print(len(validation_files))
 
-# make lists of numpy array where each array contains all samples from one dataset
-batches = []
-label_batches = []
-
-all_train_samples = []
-all_train_labels = []
-
-all_val_samples = []
-all_val_labels = []
-
-file_name = tf.placeholder(tf.string, shape=[None])
-dataset = make_ds.dataset_from_TFRecords(file_name, 500, keys, data_types,
-                                         shuffle_buffer=0, num_cores=32, parallel_reads=1)
-iterator = dataset.make_initializable_iterator()
-sample_batch, label_batch = iterator.get_next()
-
-with tf.Session() as sess:
-    for training_file in training_files:
-        sess.run(iterator.initializer, feed_dict={file_name: [training_file]})
-        while True:
-            try:
-                samples, labels = sess.run([sample_batch, label_batch])
-                batches.append(samples)
-                label_batches.append(labels)
-            except tf.errors.OutOfRangeError:
-                break
-        samples = np.concatenate(batches)
-        labels = np.concatenate(label_batches)
-
-        batches = []
-        label_batches = []
-
-        all_train_samples.append(samples)
-        all_train_labels.append(labels)
-
-    for validation_file in validation_files:
-        sess.run(iterator.initializer, feed_dict={file_name: [validation_file]})
-        while True:
-            try:
-                samples, labels = sess.run([sample_batch, label_batch])
-                batches.append(samples)
-                label_batches.append(labels)
-            except tf.errors.OutOfRangeError:
-                break
-        samples = np.concatenate(batches)
-        labels = np.concatenate(label_batches)
-
-        batches = []
-        label_batches = []
-
-        all_val_samples.append(samples)
-        all_val_labels.append(labels)
-tf.reset_default_graph()
+# extract samples from files
+all_train_samples, all_train_labels, all_val_samples, all_val_labels = extract_samples(training_files, validation_files)
 
 print('after file reading:\n___________________')
 for s, l in zip(all_train_samples, all_train_labels):
@@ -261,12 +197,12 @@ for epoch in range(epochs):
     else:
         print('Model not saved, Val acc: ', np.mean(test_accs))
 
-pickle_out = open(os.path.join(save_path, 'test_accuracies'), 'wb')
-pickle.dump(test_accuracies, pickle_out)
-pickle_out.close()
-
 pickle_out = open(os.path.join(save_path, 'train_accuracies'), 'wb')
 pickle.dump(train_accuracies, pickle_out)
+pickle_out.close()
+
+pickle_out = open(os.path.join(save_path, 'test_accuracies'), 'wb')
+pickle.dump(test_accuracies, pickle_out)
 pickle_out.close()
 
 K.clear_session()
