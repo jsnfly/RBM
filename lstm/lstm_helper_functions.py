@@ -70,3 +70,17 @@ def extract_samples(training_files, validation_files, keys, data_types):
     tf.reset_default_graph()
 
     return all_train_samples, all_train_labels, all_val_samples, all_val_labels
+
+# # get features from feed forward network
+# model_path = '/home/jonas/PycharmProjects/convnet/test2Model.hdf5'
+# model = load_model(model_path)
+# model.summary()
+# layer_name = 'global_average_pooling1d'
+# last_layer_model = Model(inputs=model.input, outputs=model.get_layer(layer_name).output)
+#
+# for d, train_samples in enumerate(all_train_samples):
+#     all_train_samples[d] = last_layer_model.predict(train_samples)
+#
+# for d, val_samples in enumerate(all_val_samples):
+#     all_val_samples[d] = last_layer_model.predict(val_samples)
+# K.clear_session()

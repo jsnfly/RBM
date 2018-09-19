@@ -43,7 +43,10 @@ print(len(training_files))
 print(len(validation_files))
 
 # extract samples from files
-all_train_samples, all_train_labels, all_val_samples, all_val_labels = extract_samples(training_files, validation_files)
+all_train_samples, all_train_labels, all_val_samples, all_val_labels = extract_samples(training_files,
+                                                                                       validation_files,
+                                                                                       keys,
+                                                                                       data_types)
 
 print('after file reading:\n___________________')
 for s, l in zip(all_train_samples, all_train_labels):
