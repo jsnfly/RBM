@@ -17,7 +17,7 @@ def simple_dataset(training_samples, batch_size, shuffle_buffer=0, cache=True):
         dataset = dataset.shuffle(buffer_size=shuffle_buffer)
     dataset = dataset.batch(batch_size)
     dataset = dataset.prefetch(buffer_size=1)
-    if cache == True:
+    if cache is True:
         dataset = dataset.cache()
     return dataset
 
@@ -91,7 +91,7 @@ def sliding_window_dataset_labels(one_hot_labels, window_size, batch_size, strid
 
 def _bytes_feature(value):
     """
-    helper funtion to convert value into a bytes feature
+    helper function to convert value into a bytes feature
     """
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
@@ -127,7 +127,7 @@ def dataset_from_TFRecords(file_name, batch_size, keys, data_types, shuffle_buff
         keys: keys of the features to load, list of strings
         data_types: list of datatypes corresponding to keys, list of strings ('float32' or 'int32')
         (must be the datatypes which where used when writing the file!!)
-        shuffle_buffer: number of examples that are shuffled simultaniously, 0 means no shuffeling
+        shuffle_buffer: number of examples that are shuffled simultaniously, 0 means no shuffling
         parallel_reads: number of files that are read in parallel, int
         num_cores: number of CPU cores available in the system
     """
@@ -182,7 +182,7 @@ def make_LSH_values_and_indicies(batch, random_binary_matrix, num_KCs, p_WTA, re
     num_activations = int(p_WTA * num_KCs)
     activation_KCs = tf.matmul(batch, random_binary_matrix)
     WTA_values, WTA_indices_flat = tf.nn.top_k(activation_KCs, k=num_activations)
-    if return_WTA_matrix == True:
+    if return_WTA_matrix is True:
         batch_size = tf.shape(batch)[0]
         WTA_indices = tf.stack([tf.stack([tf.range(start=0, limit=batch_size) for i in range(num_activations)], axis=1),
                                 WTA_indices_flat], axis=-1)

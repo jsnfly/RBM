@@ -6,38 +6,36 @@ import pickle
 import time
 import numpy as np
 from evaluate.helper_functions import layerwise_activations
-from tensorflow.keras.models import Sequential, Model, load_model
+from tensorflow.keras.models import Sequential, load_model, Model
 from tensorflow.keras.layers import LSTM, Dense, TimeDistributed
-from tensorflow.keras import backend as K
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras import backend as K
 from lstm_helper_functions import *
-from tensorflow.python.client import device_lib
-
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-# print(device_lib.list_local_devices()
 
 # set paramters
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 NUM_TIME_STEPS = 60
 LSTM_SIZE = 64
 REVERSE = True
 BATCH_SIZE = 64
-EPOCHS = 20
+EPOCHS = 10
 LEARNING_RATE = 0.001
 FORWARD_DROPOUT = 0
 RECURRENT_DROPOUT = 0
 SAVE_PATH = "Stateful_LSTM"
-SAVE_NAME = f"DBN_{NUM_TIME_STEPS}length_{LSTM_SIZE}size_{int(time.time())}"
+SAVE_NAME = f"512-512-64-Feedforward_{NUM_TIME_STEPS}length_{LSTM_SIZE}size_{int(time.time())}"
 if REVERSE is True:
     SAVE_NAME = SAVE_NAME + "_Reverse"
 
 # set FEATURE_MODEL to None if no keras model is used
-FEATURE_MODEL = None
+FEATURE_MODEL = '/home/jonas/Desktop/pre_train_raw_data/512_512_64/unbalanced_old_and_new/finetune_unbalanced/run2Model.hdf5'
 # LAYER_NAME can be obtained from calling model.summary()
 LAYER_NAME = "dense_2"
 
 # set DBN_MODEL to None if no dbn is used
-DBN_MODEL = "/home/jonas/Desktop/pre_train_raw_data/512_512_64/unbalanced_old_and_new/dbn.pickle"
+DBN_MODEL = None
 # LAYER_INDEX is only relevant for DBN models
 LAYER_INDEX = -1  # -1 for last layer
 
@@ -216,8 +214,8 @@ for epoch in range(EPOCHS):
         train_labels = all_train_labels[d]
         num_batches = length // BATCH_SIZE
         for i in range(num_batches):
-            x_batch = train_samples[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]
-            y_batch = train_labels[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]
+            x_batch = train_samples[i*BATCH_SIZE: (i+1)*BATCH_SIZE]
+            y_batch = train_labels[i*BATCH_SIZE: (i+1)*BATCH_SIZE]
             tr_loss, tr_acc = model.train_on_batch(x_batch, y_batch)
             epoch_tr_losses.append(tr_loss)
             epoch_tr_accs.append(tr_acc)
@@ -231,8 +229,8 @@ for epoch in range(EPOCHS):
         val_labels = all_val_labels[d]
         num_samples = length // BATCH_SIZE
         for i in range(num_samples):
-            x_batch = val_samples[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]
-            y_batch = val_labels[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]
+            x_batch = val_samples[i*BATCH_SIZE: (i+1)*BATCH_SIZE]
+            y_batch = val_labels[i*BATCH_SIZE: (i+1)*BATCH_SIZE]
             test_loss, test_acc = model.test_on_batch(x_batch, y_batch)
             epoch_test_losses.append(test_loss)
             epoch_test_accs.append(test_acc)
