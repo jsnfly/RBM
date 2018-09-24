@@ -1,6 +1,8 @@
 import tensorflow as tf
 import numpy as np
 import train.make_datasets as make_ds
+from tensorflow.keras.models import Model, load_model
+from tensorflow.keras import backend as K
 
 
 def make_batches(sample_array, batch_size):
@@ -14,7 +16,7 @@ def make_batches(sample_array, batch_size):
     return sample_batches
 
 
-def extract_samples(training_files, validation_files, keys, data_types):
+def extract_samples(training_files, validation_files, keys, data_types, reverse=False):
     # make lists of numpy array where each array contains all samples from one dataset
     batches = []
     label_batches = []
@@ -47,8 +49,13 @@ def extract_samples(training_files, validation_files, keys, data_types):
             batches = []
             label_batches = []
 
-            all_train_samples.append(samples)
-            all_train_labels.append(labels)
+            if reverse is True:
+                all_train_samples.append(np.flip(samples, axis=0))
+                all_train_labels.append(np.flip(labels, axis=0))
+
+            else:
+                all_train_samples.append(samples)
+                all_train_labels.append(labels)
 
         for validation_file in validation_files:
             sess.run(iterator.initializer, feed_dict={file_name: [validation_file]})
@@ -65,22 +72,14 @@ def extract_samples(training_files, validation_files, keys, data_types):
             batches = []
             label_batches = []
 
-            all_val_samples.append(samples)
-            all_val_labels.append(labels)
+            if reverse is True:
+                all_val_samples.append(np.flip(samples, axis=0))
+                all_val_labels.append(np.flip(labels, axis=0))
+
+            else:
+                all_val_samples.append(samples)
+                all_val_labels.append(labels)
     tf.reset_default_graph()
 
     return all_train_samples, all_train_labels, all_val_samples, all_val_labels
 
-# # get features from feed forward network
-# model_path = '/home/jonas/PycharmProjects/convnet/test2Model.hdf5'
-# model = load_model(model_path)
-# model.summary()
-# layer_name = 'global_average_pooling1d'
-# last_layer_model = Model(inputs=model.input, outputs=model.get_layer(layer_name).output)
-#
-# for d, train_samples in enumerate(all_train_samples):
-#     all_train_samples[d] = last_layer_model.predict(train_samples)
-#
-# for d, val_samples in enumerate(all_val_samples):
-#     all_val_samples[d] = last_layer_model.predict(val_samples)
-# K.clear_session()
