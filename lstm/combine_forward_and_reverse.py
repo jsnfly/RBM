@@ -18,7 +18,6 @@ from sklearn.metrics import confusion_matrix
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-# print(device_lib.list_local_devices()
 
 FORWARD_PATH = '/home/jonas/PycharmProjects/RBM/lstm/Stateful_LSTM/512-512-64-Feedforward_60length_64size_1537799658/best_model'
 REVERSE_PATH = '/home/jonas/PycharmProjects/RBM/lstm/Stateful_LSTM/512-512-64-Feedforward_60length_64size_1537800016_Reverse/best_model'

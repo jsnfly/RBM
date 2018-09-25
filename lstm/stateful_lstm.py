@@ -110,7 +110,7 @@ if DBN_MODEL is not None:
     for d, val_samples in enumerate(all_val_samples):
         all_val_samples[d] = layerwise_activations(dbn, val_samples, num_activations=1)[LAYER_INDEX]
 
-# cut all datasets to have a (whole number * BATCH_SIZE * time_steps) samples:
+# cut all datasets to have a (whole number * BATCH_SIZE * time_steps) samples
 num_samples_batch = BATCH_SIZE * NUM_TIME_STEPS
 
 all_train_samples = [train_samples[:train_samples.shape[0] // num_samples_batch * num_samples_batch, :] for
@@ -136,7 +136,7 @@ for s, l in zip(all_val_samples, all_val_labels):
 num_x_signals = all_train_samples[0].shape[1]
 num_labels = all_train_labels[0].shape[1]
 
-# reshape to match shape (num_series, num_time_steps, num_x_signals):
+# reshape to match shape (num_series, num_time_steps, num_x_signals)
 all_train_samples = [
     np.reshape(train_samples, [train_samples.shape[0] // NUM_TIME_STEPS, NUM_TIME_STEPS, num_x_signals]) for
     train_samples in all_train_samples]
