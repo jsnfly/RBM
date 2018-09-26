@@ -4,14 +4,12 @@ sys.path.append("..")
 import os
 import pickle
 import time
-import numpy as np
 from evaluate.helper_functions import layerwise_activations
 from tensorflow.keras.models import Sequential, load_model, Model
 from tensorflow.keras.layers import LSTM, Dense, TimeDistributed, Input, Bidirectional
-from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import backend as K
 from tensorflow.keras.callbacks import ModelCheckpoint
-from lstm_helper_functions import *
+from lstm.lstm_helper_functions import *
 
 # set paramters
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
@@ -174,9 +172,7 @@ if not os.path.exists(save_path):
 generator = batch_generator(batch_size=BATCH_SIZE, sequence_length=NUM_TIME_STEPS)
 val_generator = val_batch_generator(batch_size=BATCH_SIZE, sequence_length=NUM_TIME_STEPS)
 
-model = Sequential()
 a = Input(shape=(NUM_TIME_STEPS, num_x_signals,))
-x = (a)
 if BIDIRECTIONAL:
     x = Bidirectional(LSTM(units=LSTM_SIZE, return_sequences=True, dropout=0.50, recurrent_dropout=0))(a)
 else:

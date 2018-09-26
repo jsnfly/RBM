@@ -4,26 +4,23 @@ sys.path.append("..")
 
 import os
 import pickle
-import time
-import numpy as np
 import matplotlib.pyplot as plt
-import tensorflow as tf
-from tensorflow.python.keras.models import Sequential, load_model, Model
+from tensorflow.python.keras.models import load_model, Model
 from evaluate.helper_functions import layerwise_activations
 from evaluate.plot import plot_confusion_matrix
-from tensorflow.keras.layers import Dropout, Dense, Activation
-from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras import backend as K
-from lstm_helper_functions import *
+from lstm.lstm_helper_functions import *
 from sklearn.metrics import confusion_matrix
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 LSTM_PATH = '/home/jonas/PycharmProjects/RBM/lstm/Stateful_LSTM/512-512-64-Feedforward_60length_64size_1537799658/best_model'
+SAVE_PATH = None
 REVERSE = False
 STATEFUL = True
 NUM_TIME_STEPS = 60
+WINDOW_LENGTH = 1
 BATCH_SIZE = 64
 
 # set FEATURE_MODEL to None if no keras model is used
@@ -134,16 +131,18 @@ if not STATEFUL:
     else:
         model = load_model(LSTM_PATH)
 
-    outputs = {}
+    all_outputs = []
     for d, val_samples in enumerate(all_val_samples):
-        outputs['dataset{}'.format(d)] = []
+        outputs = []
         for s in range(val_samples.shape[0] // NUM_TIME_STEPS):
             sample = val_samples[s * NUM_TIME_STEPS:(s + 1) * NUM_TIME_STEPS, :]
             sample = np.expand_dims(sample, axis=0)
             output = model.predict(sample)
-            outputs['dataset{}'.format(d)].append(output)
-        outputs['dataset{}'.format(d)] = np.concatenate(outputs['dataset{}'.format(d)], axis=1)
-        print('shape outputs dataset{}'.format(d), outputs['dataset{}'.format(d)].shape)
+            outputs.append(output)
+        outputs = np.concatenate(outputs, axis=1)
+        outputs = outputs.reshape([-1, 5])
+        all_outputs.append(outputs)
+        print('shape outputs dataset{}'.format(d), outputs[d].shape)
     K.clear_session()
 
 else:
@@ -178,97 +177,31 @@ else:
 
     lengths_val_datasets = [d.shape[0] for d in all_val_samples]
     model = load_model(LSTM_PATH)
-    outputs = {}
+    all_outputs = []
     for d, length in enumerate(lengths_val_datasets):
-        outputs['dataset{}'.format(d)] = []
+        outputs = []
         val_samples = all_val_samples[d]
         num_samples = length // BATCH_SIZE
         for i in range(num_samples):
             x_batch = val_samples[i * BATCH_SIZE:(i + 1) * BATCH_SIZE]
             output = model.predict_on_batch(x_batch)
-            outputs['dataset{}'.format(d)].append(output)
+            outputs.append(output)
         model.reset_states()
-        outputs['dataset{}'.format(d)] = np.concatenate(outputs['dataset{}'.format(d)], axis=1)
-        print('shape outputs dataset{}'.format(d), outputs['dataset{}'.format(d)].shape)
+        outputs = np.concatenate(outputs, axis=1)
+        outputs = outputs.reshape([-1, 5])
+        all_outputs.append(outputs)
+        print('shape outputs dataset{}'.format(d), outputs[d].shape)
     K.clear_session()
 
-K.clear_session()
-total_num_corrects = 0
-total_num_samples = 0
+if REVERSE:
+    # Reflip
+    all_outputs = [np.flip(outputs, axis=0) for outputs in all_outputs]
+    all_val_labels = [np.flip(val_labels, axis=0) for val_labels in all_val_labels]
 
-num_corrects_after_average = 0
-num_samples_after_average = 0
-
-all_true_classes_reduced = []
-all_output_classes_reduced = []
-
-fig, axes = plt.subplots(2, 3, figsize=(5.79, 4.79))
-
-for d in range(5):
-    ax = axes.flat[d]
-    # get output classes for one dataset:
-    output = outputs['dataset{}'.format(d)]
-    output = output.reshape([-1, 5])
-    output_classes = np.argmax(output, axis=1)
-
-    # get true classes for one dataset:
-    true_labels = all_val_labels[d][:output.shape[0], :]
-    true_labels = true_labels.reshape([-1, 5])
-    true_classes = np.argmax(true_labels, axis=1)
-
-    if REVERSE:
-        output_classes = np.flip(output_classes, axis=0)
-        true_classes = np.flip(true_classes, axis=0)
-    # get accuracy
-    num_corrects = np.where(np.array(true_classes) == np.array(output_classes))[0].shape[0]
-    accuracy_before_average = num_corrects / len(output_classes)
-    print('Accuracy before 30s average: ', accuracy_before_average)
-
-    total_num_corrects += num_corrects
-    total_num_samples += len(output_classes)
-
-    # make reduced classes
-    output_classes_reduced = []
-    true_classes_reduced = []
-    for j in range(output_classes.shape[0] // 30):
-        values, counts = np.unique(output_classes[j * 30:(j + 1) * 30], return_counts=True)
-        max_index = np.argmax(counts)
-        max_value = values[max_index]
-        output_classes_reduced.append(max_value)
-
-        values, counts = np.unique(true_classes[j * 30:(j + 1) * 30], return_counts=True)
-        max_index = np.argmax(counts)
-        max_value = values[max_index]
-        true_classes_reduced.append(max_value)
-
-    all_true_classes_reduced.append(true_classes_reduced)
-    all_output_classes_reduced.append(output_classes_reduced)
-
-    reduced_correct_inds = np.where(np.array(true_classes_reduced) == np.array(output_classes_reduced))[0]
-    num_corrects = reduced_correct_inds.shape[0]
-    accuracy_after_average = num_corrects / len(output_classes_reduced)
-    num_corrects_after_average += num_corrects
-    num_samples_after_average += len(output_classes_reduced)
-
-    x = np.arange(len(true_classes_reduced))
-    ax.plot(true_classes_reduced, lw=2, c='b', alpha=0.7, label='True Labels')
-    ax.plot(x, output_classes_reduced, lw=2, c='r', alpha=0.7, label='Predicted Labels')
-    print('Accuracy after 30s average: ', accuracy_after_average)
-    ax.set_title('Test Dataset {}'.format(d + 1))
-    ax.set_xlabel('Acc: {:03.1f} %'.format(accuracy_after_average * 100))
-axes[1, 2].remove()
-axes[0, 1].set_yticks([])
-axes[0, 1].set_yticklabels([])
-axes[0, 2].set_yticks([])
-axes[0, 2].set_yticklabels([])
-axes[1, 1].set_yticks([])
-axes[1, 1].set_yticklabels([])
-plt.tight_layout()
-axes[1, 1].legend(loc=(1.2, 0.4))
-# plt.savefig('/home/jonas/Schreibtisch/feedforward_and_fourier_labeling.pdf', format='pdf')
-plt.show()
-print('Mean Accuracy before average: ', total_num_corrects / total_num_samples)
-print('Mean Accuracy after average: ', num_corrects_after_average / num_samples_after_average)
+all_output_classes_reduced, all_true_classes_reduced = get_accuracies_and_plot_labels(all_outputs,
+                                                                                      all_val_labels,
+                                                                                      time_window_length=WINDOW_LENGTH,
+                                                                                      save_path=SAVE_PATH)
 
 cm = confusion_matrix(np.concatenate(all_true_classes_reduced), np.concatenate(all_output_classes_reduced))
 np.set_printoptions(precision=2)

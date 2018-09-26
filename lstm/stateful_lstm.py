@@ -4,13 +4,12 @@ sys.path.append("..")
 import os
 import pickle
 import time
-import numpy as np
 from evaluate.helper_functions import layerwise_activations
 from tensorflow.keras.models import Sequential, load_model, Model
+from tensorflow.keras import backend as K
 from tensorflow.keras.layers import LSTM, Dense, TimeDistributed
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras import backend as K
-from lstm_helper_functions import *
+from lstm.lstm_helper_functions import *
 
 # set paramters
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
