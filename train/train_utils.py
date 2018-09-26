@@ -1,5 +1,6 @@
 import tensorflow as tf
 import train.sampling as sampling
+import train.make_datasets as make_ds
 
 
 # contrastive divergence:
@@ -93,7 +94,7 @@ def upward_propagation(batch, dbn, layer_index, get_activations=False):
         the layer specified by layer_index
     :return: either the upward propagated batch or a list of activations for each layer
     """
-    if get_activations is True:
+    if get_activations:
         activations = []
         num_layers = layer_index + 1
     else:
@@ -123,9 +124,74 @@ def upward_propagation(batch, dbn, layer_index, get_activations=False):
                                                   tf.constant(layer.weights),
                                                   tf.constant(layer.hbiases))
             batch = sampling.sampling(activation)
-        if get_activations is True:
+        if get_activations:
             activations.append(activation)
-    if get_activations is True:
+    if get_activations:
         return activations
     else:
         return batch
+
+
+def get_one_batch(train_data, batch_size):
+    dataset = make_ds.simple_dataset(train_data, batch_size, shuffle_buffer=10000, cache=False)
+    iterator = dataset.make_initializable_iterator()
+    batch = iterator.get_next()
+    with tf.Session() as sess:
+        sess.run(iterator.initializer)
+        first_batch = sess.run(batch)
+    tf.reset_default_graph()
+    return first_batch
+
+
+def calculate_energy(layer_type, visible_states, hidden_states, vbiases, hbiases, weights, log_sigmas=None):
+    if layer_type == 'gb' or layer_type == 'gr':
+        weights_term = -tf.reduce_sum(tf.multiply(tf.matmul(tf.divide(visible_states, tf.exp(log_sigmas)),
+                                                            weights), hidden_states), axis=1)
+        vbiases_term = tf.reduce_sum(tf.divide(tf.square(visible_states - vbiases), 2 * tf.exp(log_sigmas)), axis=1)
+        hbiases_term = -tf.matmul(hidden_states, hbiases, transpose_b=True)
+    else:
+        weights_term = -tf.reduce_sum(tf.multiply(tf.matmul(visible_states, weights), hidden_states), axis=1)
+        # [[v0w00+v1w10,v0w01+v1w11,...](1)
+        # [v0w00+v1w10,v0w01+v1w11,...](2)]
+        vbiases_term = -tf.matmul(visible_states, vbiases, transpose_b=True)
+        hbiases_term = -tf.matmul(hidden_states, hbiases, transpose_b=True)
+
+    energy = weights_term + tf.reshape(vbiases_term, [-1]) + tf.reshape(hbiases_term, [-1])
+    return energy
+
+
+def get_best_learning_rate(batch, layer_type, etas, cd_steps,
+                           train_vbiases, train_hbiases, train_weights,
+                           delta_vbiases, delta_hbiases, delta_weights,
+                           train_log_sigmas=None, delta_log_sigmas=None):
+    approx_likelihoods = []
+    v0_ = batch
+    h0_, h0, vn_, vn, hn_ = cd_procedure(batch, layer_type, cd_steps,
+                                         train_vbiases, train_hbiases, train_weights, train_log_sigmas)
+    hn = sampling.sampling(hn_)
+
+    e_model = calculate_energy(layer_type, vn, hn, train_vbiases, train_hbiases, train_weights, train_log_sigmas)
+
+    for candidate_eta in etas:
+        vbiases_prime = train_vbiases + candidate_eta * delta_vbiases
+        hbiases_prime = train_hbiases + candidate_eta * delta_hbiases
+        weights_prime = train_weights + candidate_eta * delta_weights
+        if layer_type == 'gb':
+            log_sigmas_prime = train_log_sigmas + candidate_eta * delta_log_sigmas
+        else:
+            log_sigmas_prime = None
+
+        e_prime = calculate_energy(layer_type, v0_, h0, vbiases_prime, hbiases_prime, weights_prime, log_sigmas_prime)
+        e_prime_model = calculate_energy(layer_type, vn, hn, vbiases_prime, hbiases_prime, weights_prime,
+                                         log_sigmas_prime)
+        e_prime = tf.cast(e_prime, tf.float64)
+        rho_prime = tf.exp(-e_prime)
+
+        p_prime = tf.reduce_mean(tf.divide(rho_prime,
+                                           tf.reduce_mean(tf.exp(tf.cast(-e_prime_model - e_model, tf.float64)))))
+        approx_likelihoods.append(p_prime)
+
+    approx_likelihoods = tf.stack(approx_likelihoods, axis=0)
+    ind_eta = tf.argmax(approx_likelihoods)
+
+    return ind_eta

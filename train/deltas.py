@@ -54,11 +54,11 @@ def delta_log_sigmas(v0, h0, vn, hn, vbiases, weights, log_sigmas):
     :param log_sigmas: logarithmic squared standard deviation, shape: [1, num_vunits]
     :return: log sigmas update, shape: [1, num_vunits]
     """
-    data_term = tf.reduce_mean(0.5*tf.square(v0 - vbiases)
+    data_term = tf.reduce_mean(0.5 * tf.square(v0 - vbiases)
                                - tf.multiply(v0, tf.transpose(tf.matmul(weights, h0, transpose_b=True))),
                                axis=0, keepdims=True)
 
-    model_term = tf.reduce_mean(0.5*tf.square(vn - vbiases)
+    model_term = tf.reduce_mean(0.5 * tf.square(vn - vbiases)
                                 - tf.multiply(vn, tf.transpose(tf.matmul(weights, hn, transpose_b=True))),
                                 axis=0, keepdims=True)
 
@@ -93,3 +93,55 @@ def sparse_terms(p, q, h_, v0, log_sigmas=None):
         v0 = tf.divide(v0, tf.exp(log_sigmas))
     sparse_term_w = tf.matmul(v0, (h_ - p), transpose_a=True) / tf.cast(tf.shape(v0)[0], tf.float32)
     return sparse_term_hbias, sparse_term_w
+
+
+def enhanced_deltas(v0, h0, vn, hn, batch_size):
+    """
+    calculate learning step for weights
+    Args:
+        v0: array of initial values of visible units, shape: [batch_size,num_vUnits]
+        h0: array of values of hidden units after one gibbs step, shape: [batch_size,num_hUnits]
+        vn: array of values of visible units after running markov chain, shape: [batch_size,num_vUnits]
+        hn: array of values of hidden units after running markov chain, shape: [batch_size,num_hUnits]
+    Returns:
+        delta vbiases, shape: [1,num_vUnits]
+        delta hbiases, shape: [1,num_hUnits]
+        delta weights, shape: [num_vUnits,num_hUnits]
+    """
+    avg_vh_data = tf.matmul(v0, h0, transpose_a=True) / batch_size
+    avg_vh_model = tf.matmul(vn, hn, transpose_a=True) / batch_size
+    avg_v_data = tf.reduce_mean(v0, axis=0, keepdims=True)
+    avg_v_model = tf.reduce_mean(vn, axis=0, keepdims=True)
+    avg_h_data = tf.reduce_mean(h0, axis=0, keepdims=True)
+    avg_h_model = tf.reduce_mean(hn, axis=0, keepdims=True)
+
+    delta_w = avg_vh_data - avg_vh_model - tf.matmul(avg_v_data, avg_h_data, transpose_a=True) + tf.matmul(avg_v_model,
+                                                                                                           avg_h_model,
+                                                                                                           transpose_a=True)
+    delta_vb = avg_v_data - avg_v_model - tf.matmul(0.5 * (avg_h_data + avg_h_model), delta_w, transpose_b=True)
+    delta_hb = avg_h_data - avg_h_model - tf.matmul(0.5 * (avg_v_data + avg_v_model), delta_w)
+    return delta_vb, delta_hb, delta_w
+
+
+def enhanced_delta_log_sigmas(v0, h0, v1, h1, vbiases, weights, log_sigma):
+    """
+    calculate probabilities for hidden units to be on given gaussian visible units
+    Args:
+        v0: array of initial values of visible units, shape: [batch_size,num_vUnits]
+        h0: array of values of hidden units after one gibbs step, shape: [batch_size,num_hUnits]
+        v1: array of values of visible units after running markov chain, shape: [batch_size,num_vUnits]
+        h1: array of values of hidden units after running markov chain, shape: [batch_size,num_hUnits]
+        weights: weight matrix, shape: [num_vUnits,num_hUnits]
+        vbiases: biases of visible units, shape: [1,num_vUnits]
+        log_sigma: log of squared standard deviations of visible units, shape: [1,num_vUnits]
+    Returns:
+        delta for log sigmas
+    """
+    data_term = tf.reduce_mean(0.5 * tf.square(v0 - vbiases)
+                               - tf.multiply(v0, tf.transpose(tf.matmul(weights, h0, transpose_b=True))),
+                               axis=0, keepdims=True)
+    model_term = tf.reduce_mean(0.5 * tf.square(v1 - vbiases)
+                                - tf.multiply(v1, tf.transpose(tf.matmul(weights, h1, transpose_b=True))),
+                                axis=0, keepdims=True)
+    delta_ls = tf.multiply(tf.exp(-log_sigma), (data_term - model_term))
+    return delta_ls
