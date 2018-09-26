@@ -51,7 +51,10 @@ def sliding_window_dataset(training_samples, window_size, batch_size, stride=1, 
         dataset: (shuffled) and batched sliding window dataset
     """
     dataset = tf.data.Dataset.from_tensor_slices(training_samples)
-    dataset = dataset.apply(tf.contrib.data.sliding_window_batch(window_size, stride=stride))
+    if stride != 0:
+        dataset = dataset.apply(tf.contrib.data.sliding_window_batch(window_size, stride=stride))
+    else:
+        dataset = dataset.batch(window_size)
     dataset = dataset.map(map_func=flatten2, num_parallel_calls=num_cores)
     dataset = dataset.batch(batch_size)
     return dataset
@@ -65,8 +68,7 @@ def make_one_hot_window_label(sliding_window_sample):
     """
     one_hot_labels = tf.one_hot(sliding_window_sample, depth=5, dtype=tf.int32)
     reshaped = tf.reshape(one_hot_labels, [-1, one_hot_labels.shape[-1]])
-    #   mean = tf.reduce_mean(reshaped,axis=0)
-    mean = tf.reduce_sum(reshaped, axis=0) / tf.shape(reshaped)[0]
+    mean = tf.reduce_mean(tf.cast(reshaped, tf.float32), axis=0)
     _, ind = tf.nn.top_k(mean, k=1)
     one_hot_label = tf.scatter_nd([ind], [1], shape=mean.shape)
     return one_hot_label
@@ -83,7 +85,10 @@ def sliding_window_dataset_labels(one_hot_labels, window_size, batch_size, strid
         dataset: (shuffled) and batched sliding window dataset
     """
     dataset = tf.data.Dataset.from_tensor_slices(one_hot_labels)
-    dataset = dataset.apply(tf.contrib.data.sliding_window_batch(window_size, stride=stride))
+    if stride != 0:
+        dataset = dataset.apply(tf.contrib.data.sliding_window_batch(window_size, stride=stride))
+    else:
+        dataset = dataset.batch(window_size)
     dataset = dataset.map(map_func=make_one_hot_window_label, num_parallel_calls=num_cores)
     dataset = dataset.batch(batch_size)
     return dataset
