@@ -15,18 +15,21 @@ from sklearn.metrics import confusion_matrix
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-LSTM_PATH = '/home/jonas/PycharmProjects/RBM/lstm/Stateful_LSTM/512-512-64-Feedforward_60length_64size_1537799658/best_model'
+LSTM_PATH = '/home/jonas/Desktop/testing/stateful_reverse/512-256-128-64_finetuned_60length_64size_1538040177_Reverse/best_model'
 SAVE_PATH = None
-REVERSE = False
+REVERSE = True
 STATEFUL = True
 NUM_TIME_STEPS = 60
-WINDOW_LENGTH = 1
+WINDOW_LENGTH = 1  # length of single input samples, not whole time series,
+# so e.g. samples of 256 values for a sampling rate of 256 Hz gives a window lenght of 1
+
 BATCH_SIZE = 64
+WARMUP_STEPS = 0
 
 # set FEATURE_MODEL to None if no keras model is used
-FEATURE_MODEL = '/home/jonas/Desktop/pre_train_raw_data/512_512_64/unbalanced_old_and_new/finetune_unbalanced/run2Model.hdf5'
+FEATURE_MODEL = '/home/jonas/Desktop/pre_train_raw_data/512_256_128_64/unbalanced_old_and_new/finetune_unbalanced/run1Model.hdf5'
 # LAYER_NAME can be obtained from calling model.summary()
-LAYER_NAME = "dense_2"
+LAYER_NAME = "dense_3"
 
 # set DBN_MODEL to None if no dbn is used
 DBN_MODEL = None
@@ -36,11 +39,11 @@ LAYER_INDEX = -1  # -1 for last layer
 if FEATURE_MODEL is not None and DBN_MODEL is not None:
     raise AttributeError("Keras model and DBN model given, set one or both to None!")
 
-# get training and validation files
 LOAD_PATH = "/home/jonas/HDD/data/unwindowed/unwindowed_z-transformed/"
 KEYS = ["sample", "one_hot_label"]
 DATA_TYPES = ["float32", "int32"]
 
+# get validation files
 validation_files = []
 
 # only works if there is now dataset number higher than 50!
@@ -87,10 +90,8 @@ if DBN_MODEL is not None:
 
 if not STATEFUL:
     # FOR STATELESS:
-    WARMUP = False
 
-    if WARMUP:
-        warmup_steps = 10
+    if WARMUP_STEPS != 0:
 
         def loss_warmup(y_true, y_pred):
             """
@@ -106,8 +107,8 @@ if not STATEFUL:
 
             # Ignore the "warmup" parts of the sequences
             # by taking slices of the tensors.
-            y_true_slice = y_true[:, warmup_steps:, :]
-            y_pred_slice = y_pred[:, warmup_steps:, :]
+            y_true_slice = y_true[:, WARMUP_STEPS:, :]
+            y_pred_slice = y_pred[:, WARMUP_STEPS:, :]
 
             # These sliced tensors both have this shape:
             # [batch_size, sequence_length - warmup_steps, num_y_signals]
@@ -142,7 +143,7 @@ if not STATEFUL:
         outputs = np.concatenate(outputs, axis=1)
         outputs = outputs.reshape([-1, 5])
         all_outputs.append(outputs)
-        print('shape outputs dataset{}'.format(d), outputs[d].shape)
+        print('shape outputs dataset{}'.format(d), all_outputs[d].shape)
     K.clear_session()
 
 else:
@@ -190,13 +191,13 @@ else:
         outputs = np.concatenate(outputs, axis=1)
         outputs = outputs.reshape([-1, 5])
         all_outputs.append(outputs)
-        print('shape outputs dataset{}'.format(d), outputs[d].shape)
+        print('shape outputs dataset{}'.format(d), all_outputs[d].shape)
     K.clear_session()
 
-if REVERSE:
-    # Reflip
-    all_outputs = [np.flip(outputs, axis=0) for outputs in all_outputs]
-    all_val_labels = [np.flip(val_labels, axis=0) for val_labels in all_val_labels]
+    if REVERSE:
+        # Reflip
+        all_outputs = [np.flip(outputs, axis=0) for outputs in all_outputs]
+        all_val_labels = [np.flip(val_labels, axis=0) for val_labels in all_val_labels]
 
 all_output_classes_reduced, all_true_classes_reduced = get_accuracies_and_plot_labels(all_outputs,
                                                                                       all_val_labels,

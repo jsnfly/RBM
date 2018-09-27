@@ -18,8 +18,8 @@ from sklearn.metrics import confusion_matrix
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-FORWARD_PATH = '/home/jonas/PycharmProjects/RBM/lstm/Stateful_LSTM/512-512-64-Feedforward_60length_64size_1537799658/best_model'
-REVERSE_PATH = '/home/jonas/PycharmProjects/RBM/lstm/Stateful_LSTM/512-512-64-Feedforward_60length_64size_1537800016_Reverse/best_model'
+FORWARD_PATH = '/home/jonas/Desktop/testing/stateful_forward/512-256-128-64_finetuned_60length_64size_1538039567/best_model'
+REVERSE_PATH = '/home/jonas/Desktop/testing/stateful_reverse/512-256-128-64_finetuned_60length_64size_1538040177_Reverse/best_model'
 
 # set paramters
 NUM_TIME_STEPS = 60
@@ -28,13 +28,12 @@ LSTM_SIZE = 64
 WINDOW_LENGTH = 1
 SOFTMAX_DROPOUT = 0.5
 
-SAVE_PATH = "Combined_forward_and_reverse_stateful"
-SAVE_NAME = f"Feedforward_{NUM_TIME_STEPS}length_{LSTM_SIZE}size_{int(time.time())}"
+SAVE_PATH = None
 
 # set FEATURE_MODEL to None if no keras model is used
-FEATURE_MODEL = '/home/jonas/Desktop/pre_train_raw_data/512_512_64/unbalanced_old_and_new/finetune_unbalanced/run2Model.hdf5'
+FEATURE_MODEL = '/home/jonas/Desktop/pre_train_raw_data/512_256_128_64/unbalanced_old_and_new/finetune_unbalanced/run1Model.hdf5'
 # LAYER_NAME can be obtained from calling model.summary()
-LAYER_NAME = "dense_2"
+LAYER_NAME = "dense_3"
 
 # set DBN_MODEL to None if no dbn is used
 DBN_MODEL = None
@@ -292,17 +291,14 @@ model.fit(x=np.concatenate(all_train_outputs_combined, axis=0),
 
 all_outputs = []
 for d, val_samples in enumerate(all_val_outputs_combined):
-    all_outputs[d] = model.predict(val_samples)
+    all_outputs.append(model.predict(val_samples))
     print(f'Shape outputs dataset {d}', all_outputs[d].shape)
 K.clear_session()
 
 all_output_classes_reduced, all_true_classes_reduced = get_accuracies_and_plot_labels(all_outputs,
                                                                                       all_val_labels,
                                                                                       time_window_length=WINDOW_LENGTH,
-                                                                                      save_path=os.path.join(SAVE_PATH,
-                                                                                                             SAVE_NAME,
-                                                                                                             'labeling')
-                                                                                      )
+                                                                                      save_path=SAVE_PATH)
 
 cm = confusion_matrix(np.concatenate(all_true_classes_reduced), np.concatenate(all_output_classes_reduced))
 np.set_printoptions(precision=2)

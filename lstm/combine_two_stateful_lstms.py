@@ -18,9 +18,6 @@ from sklearn.metrics import confusion_matrix
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-FORWARD_PATH = '/home/jonas/PycharmProjects/RBM/lstm/Stateful_LSTM/512-512-64-Feedforward_60length_64size_1537799658/best_model'
-REVERSE_PATH = '/home/jonas/PycharmProjects/RBM/lstm/Stateful_LSTM/512-512-64-Feedforward_60length_64size_1537800016_Reverse/best_model'
-
 # set paramters
 NUM_TIME_STEPS = 60
 BATCH_SIZE = 64
@@ -28,18 +25,20 @@ WINDOW_LENGTH = 1
 SOFTMAX_DROPOUT = 0.5
 
 
-SAVE_PATH = "Combined_forward_and_reverse_stateful"
-SAVE_NAME = f"Feedforward_{NUM_TIME_STEPS}length_{LSTM_SIZE}size_{int(time.time())}"
+SAVE_PATH = None
 
 
 #########################################################
 # PART 1
+FORWARD_PATH = '/home/jonas/Desktop/testing/stateful_forward/512-256-128-64_finetuned_60length_64size_1538039567/best_model'
+REVERSE_PATH = '/home/jonas/Desktop/testing/stateful_reverse/512-256-128-64_finetuned_60length_64size_1538040177_Reverse/best_model'
+
 LSTM_SIZE = 64
 lstm1_size = LSTM_SIZE
 # set FEATURE_MODEL to None if no keras model is used
-FEATURE_MODEL = '/home/jonas/Desktop/pre_train_raw_data/512_512_64/unbalanced_old_and_new/finetune_unbalanced/run2Model.hdf5'
+FEATURE_MODEL = '/home/jonas/Desktop/pre_train_raw_data/512_256_128_64/unbalanced_old_and_new/finetune_unbalanced/run1Model.hdf5'
 # LAYER_NAME can be obtained from calling model.summary()
-LAYER_NAME = "dense_2"
+LAYER_NAME = "dense_3"
 
 # set DBN_MODEL to None if no dbn is used
 DBN_MODEL = None
@@ -273,10 +272,13 @@ reverse_val_outputs1 = [np.flip(val_samples, axis=0) for val_samples in all_val_
 
 #########################################################
 # PART2
+FORWARD_PATH = '/home/jonas/Desktop/testing/stateful_forward/Fourier_60length_64size_1538041834/best_model'
+REVERSE_PATH = '/home/jonas/Desktop/testing/stateful_reverse/Fourier_60length_64size_1538041564_Reverse/best_model'
+
 LSTM_SIZE = 64
 lstm2_size = LSTM_SIZE
 # set FEATURE_MODEL to None if no keras model is used
-FEATURE_MODEL = '/home/jonas/Desktop/pre_train_raw_data/512_512_64/unbalanced_old_and_new/finetune_unbalanced/run2Model.hdf5'
+FEATURE_MODEL = None
 # LAYER_NAME can be obtained from calling model.summary()
 LAYER_NAME = "dense_2"
 
@@ -289,7 +291,7 @@ if FEATURE_MODEL is not None and DBN_MODEL is not None:
     raise AttributeError("Keras model and DBN model given, set one or both to None!")
 
 # get training and validation files
-LOAD_PATH = "/home/jonas/HDD/data/unwindowed/unwindowed_z-transformed/"
+LOAD_PATH = "/home/jonas/HDD/data/unwindowed/unwindowed_Fourier-transformed/"
 KEYS = ["sample", "one_hot_label"]
 DATA_TYPES = ["float32", "int32"]
 
@@ -513,7 +515,7 @@ reverse_val_outputs2 = [np.flip(val_samples, axis=0) for val_samples in all_val_
 # train combined softmax layer:
 
 # combine outputs
-all_train_outputs_combined = [np.concatenate([a, b, c, d], axis=1) for a,b,c,d in
+all_train_outputs_combined = [np.concatenate([a, b, c, d], axis=1) for a, b, c, d in
                               zip(forward_train_outputs1,
                                   reverse_train_outputs1,
                                   forward_train_outputs2,
@@ -521,7 +523,11 @@ all_train_outputs_combined = [np.concatenate([a, b, c, d], axis=1) for a,b,c,d i
 for train_outputs in all_train_outputs_combined:
     print(train_outputs.shape)
 
-all_val_outputs_combined = [np.concatenate([x, y], axis=1) for x, y in zip(forward_val_outputs, reverse_val_outputs)]
+all_val_outputs_combined = [np.concatenate([a, b, c, d], axis=1) for a, b, c, d in
+                            zip(forward_val_outputs1,
+                                reverse_val_outputs1,
+                                forward_val_outputs2,
+                                reverse_val_outputs2)]
 for val_outputs in all_val_outputs_combined:
     print(val_outputs.shape)
 
@@ -540,17 +546,14 @@ model.fit(x=np.concatenate(all_train_outputs_combined, axis=0),
 
 all_outputs = []
 for d, val_samples in enumerate(all_val_outputs_combined):
-    all_outputs[d] = model.predict(val_samples)
+    all_outputs.append(model.predict(val_samples))
     print(f'Shape outputs dataset {d}', all_outputs[d].shape)
 K.clear_session()
 
 all_output_classes_reduced, all_true_classes_reduced = get_accuracies_and_plot_labels(all_outputs,
                                                                                       all_val_labels,
                                                                                       time_window_length=WINDOW_LENGTH,
-                                                                                      save_path=os.path.join(SAVE_PATH,
-                                                                                                             SAVE_NAME,
-                                                                                                             'labeling')
-                                                                                      )
+                                                                                      save_path=SAVE_PATH)
 
 cm = confusion_matrix(np.concatenate(all_true_classes_reduced), np.concatenate(all_output_classes_reduced))
 np.set_printoptions(precision=2)

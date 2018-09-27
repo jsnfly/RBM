@@ -17,21 +17,21 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 NUM_TIME_STEPS = 60
 LSTM_SIZE = 64
-REVERSE = True
+REVERSE = False
 BATCH_SIZE = 64
 EPOCHS = 10
 LEARNING_RATE = 0.001
-FORWARD_DROPOUT = 0
-RECURRENT_DROPOUT = 0
-SAVE_PATH = "Stateful_LSTM"
-SAVE_NAME = f"512-512-64-Feedforward_{NUM_TIME_STEPS}length_{LSTM_SIZE}size_{int(time.time())}"
+FORWARD_DROPOUT = 0.5
+RECURRENT_DROPOUT = 0.0
+SAVE_PATH = "/home/jonas/Desktop/testing/stateful"
+SAVE_NAME = f"Fourier_{NUM_TIME_STEPS}length_{LSTM_SIZE}size_{int(time.time())}"
 if REVERSE is True:
     SAVE_NAME = SAVE_NAME + "_Reverse"
 
 # set FEATURE_MODEL to None if no keras model is used
-FEATURE_MODEL = '/home/jonas/Desktop/pre_train_raw_data/512_512_64/unbalanced_old_and_new/finetune_unbalanced/run2Model.hdf5'
+FEATURE_MODEL = '/home/jonas/Desktop/pre_train_raw_data/512_256_128_64/unbalanced_old_and_new/finetune_unbalanced/run1Model.hdf5'
 # LAYER_NAME can be obtained from calling model.summary()
-LAYER_NAME = "dense_2"
+LAYER_NAME = "dense_3"
 
 # set DBN_MODEL to None if no dbn is used
 DBN_MODEL = None
@@ -42,7 +42,7 @@ if FEATURE_MODEL is not None and DBN_MODEL is not None:
     raise AttributeError("Keras model and DBN model given, set one or both to None!")
 
 # get training and validation files
-LOAD_PATH = "/home/jonas/HDD/data/unwindowed/unwindowed_z-transformed/"
+LOAD_PATH = "/home/jonas/HDD/data/unwindowed/unwindowed_Fourier-transformed/"
 KEYS = ["sample", "one_hot_label"]
 DATA_TYPES = ["float32", "int32"]
 
@@ -187,12 +187,12 @@ for s, l in zip(all_val_samples, all_val_labels):
 
 train_accuracies = []
 test_accuracies = []
-current_best_val_loss = 100
+current_best_val_loss = 1000
 
 model = Sequential()
 model.add(LSTM(units=LSTM_SIZE, return_sequences=True, batch_input_shape=(BATCH_SIZE, NUM_TIME_STEPS, num_x_signals),
                dropout=FORWARD_DROPOUT, recurrent_dropout=RECURRENT_DROPOUT, stateful=True))
-model.add(TimeDistributed(Dense(5, activation="softmax")))
+model.add(TimeDistributed(Dense(num_labels, activation="softmax")))
 
 optimizer = Adam(LEARNING_RATE)
 model.compile(loss="categorical_crossentropy", optimizer=optimizer, metrics=["accuracy"])

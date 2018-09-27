@@ -15,21 +15,21 @@ from lstm.lstm_helper_functions import *
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-NUM_TIME_STEPS = 60
+NUM_TIME_STEPS = 120
 BIDIRECTIONAL = True
 LSTM_SIZE = 64
 BATCH_SIZE = 64
 EPOCHS = 10
-STEPS_PER_EPOCH = 400
-VALIDATION_STEPS_PER_EPOCH = 400
+STEPS_PER_EPOCH = 125
+VALIDATION_STEPS_PER_EPOCH = 25
 LEARNING_RATE = 0.001
-FORWARD_DROPOUT = 0
-RECURRENT_DROPOUT = 0
-SAVE_PATH = "Generator_LSTM"
-SAVE_NAME = f"512-512-64-Feedforward_{NUM_TIME_STEPS}length_{LSTM_SIZE}size_{int(time.time())}"
+FORWARD_DROPOUT = 0.5
+RECURRENT_DROPOUT = 0.05
+SAVE_PATH = "/home/jonas/Desktop/testing/generator_bidirectional/"
+SAVE_NAME = f"fourier_{NUM_TIME_STEPS}length_{LSTM_SIZE}size_{int(time.time())}"
 
 # set FEATURE_MODEL to None if no keras model is used
-FEATURE_MODEL = '/home/jonas/Desktop/pre_train_raw_data/512_512_64/unbalanced_old_and_new/finetune_unbalanced/run2Model.hdf5'
+FEATURE_MODEL = None
 # LAYER_NAME can be obtained from calling model.summary()
 LAYER_NAME = "dense_2"
 
@@ -42,7 +42,7 @@ if FEATURE_MODEL is not None and DBN_MODEL is not None:
     raise AttributeError("Keras model and DBN model given, set one or both to None!")
 
 # get training and validation files
-LOAD_PATH = "/home/jonas/HDD/data/unwindowed/unwindowed_z-transformed/"
+LOAD_PATH = "/home/jonas/HDD/data/unwindowed/unwindowed_Fourier-transformed/"
 KEYS = ["sample", "one_hot_label"]
 DATA_TYPES = ["float32", "int32"]
 
@@ -174,10 +174,10 @@ val_generator = val_batch_generator(batch_size=BATCH_SIZE, sequence_length=NUM_T
 
 a = Input(shape=(NUM_TIME_STEPS, num_x_signals,))
 if BIDIRECTIONAL:
-    x = Bidirectional(LSTM(units=LSTM_SIZE, return_sequences=True, dropout=0.50, recurrent_dropout=0))(a)
+    x = Bidirectional(LSTM(units=LSTM_SIZE, return_sequences=True, dropout=FORWARD_DROPOUT, recurrent_dropout=RECURRENT_DROPOUT))(a)
 else:
-    x = LSTM(units=LSTM_SIZE, return_sequences=True, dropout=0.50, recurrent_dropout=0)(a)
-o = TimeDistributed(Dense(5, activation='softmax'))(x)
+    x = LSTM(units=LSTM_SIZE, return_sequences=True, dropout=FORWARD_DROPOUT, recurrent_dropout=RECURRENT_DROPOUT)(a)
+o = TimeDistributed(Dense(num_labels, activation='softmax'))(x)
 model = Model(inputs=a, outputs=o)
 model.compile(loss='categorical_crossentropy', optimizer='Adam', metrics=['accuracy'])
 model.summary()

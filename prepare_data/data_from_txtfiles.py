@@ -17,12 +17,12 @@ START_CUT_OFF = 0  # cut off first x hours
 # of LABEL_SEC
 
 DATA_PATH = '/home/jonas/HDD/data/raw_data/'
-SAVE_PATH = '/home/jonas/HDD/data/windowed/stride100_pre_emphasis_shuffled/'
+SAVE_PATH = '/home/jonas/Desktop/testing/fourier_data_nostride_nopreemph'
 
-SHUFFLE = True
-FOURIER_TRANSFORM = False
+SHUFFLE = False
+FOURIER_TRANSFORM = True
 APPLY_SIGMOID = False
-STRIDE = 100  # set to zero for no stride
+STRIDE = 0  # set to zero for no stride
 PRE_EMPHASIS = 0
 
 WINDOW_SIZE = 256
@@ -164,7 +164,7 @@ for load_path in load_paths:
                     labels = np.concatenate(label_batches)
                     keys_and_raw_features = {'sample': samples,
                                              'one_hot_label': labels}
-                    make_ds.write_to_TFRecord(SAVE_PATH + file_name + '({}).tfrecords'.format(file_counter),
+                    make_ds.write_to_TFRecord(os.path.join(SAVE_PATH, file_name + f'({file_counter}).tfrecords'),
                                               keys_and_raw_features)
                     batches = []
                     label_batches = []
@@ -179,7 +179,7 @@ for load_path in load_paths:
                 labels = np.concatenate(label_batches)
                 keys_and_raw_features = {'sample': samples,
                                          'one_hot_label': labels}
-                make_ds.write_to_TFRecord(SAVE_PATH + file_name + '({}).tfrecords'.format(file_counter),
+                make_ds.write_to_TFRecord(os.path.join(SAVE_PATH, file_name + f'({file_counter}).tfrecords'),
                                           keys_and_raw_features)
                 break
     tf.reset_default_graph()
