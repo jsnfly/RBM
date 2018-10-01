@@ -17,15 +17,15 @@ START_CUT_OFF = 0  # cut off first x hours
 # of LABEL_SEC
 
 DATA_PATH = '/home/jonas/HDD/data/raw_data/'
-SAVE_PATH = '/home/jonas/Desktop/testing/fourier_data_nostride_nopreemph'
+SAVE_PATH = '/home/jonas/Desktop/testing/raw_data_30s_intervals/'
 
 SHUFFLE = False
-FOURIER_TRANSFORM = True
+FOURIER_TRANSFORM = False
 APPLY_SIGMOID = False
 STRIDE = 0  # set to zero for no stride
 PRE_EMPHASIS = 0
 
-WINDOW_SIZE = 256
+WINDOW_SIZE = 30*256
 BATCH_SIZE = 512
 SAMPLES_PER_FILE = 1000000
 

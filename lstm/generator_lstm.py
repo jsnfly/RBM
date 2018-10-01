@@ -15,23 +15,24 @@ from lstm.lstm_helper_functions import *
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-NUM_TIME_STEPS = 120
+NUM_TIME_STEPS = 20
 BIDIRECTIONAL = True
 LSTM_SIZE = 64
 BATCH_SIZE = 64
-EPOCHS = 10
-STEPS_PER_EPOCH = 125
-VALIDATION_STEPS_PER_EPOCH = 25
+EPOCHS = 20
+STEPS_PER_EPOCH = 25
+VALIDATION_STEPS_PER_EPOCH = 10
 LEARNING_RATE = 0.001
 FORWARD_DROPOUT = 0.5
-RECURRENT_DROPOUT = 0.05
-SAVE_PATH = "/home/jonas/Desktop/testing/generator_bidirectional/"
-SAVE_NAME = f"fourier_{NUM_TIME_STEPS}length_{LSTM_SIZE}size_{int(time.time())}"
+RECURRENT_DROPOUT = 0.0
+SAVE_PATH = "/home/jonas/Desktop/testing/convnet/test1/generator_bidirectional/"
+SAVE_NAME = f"{NUM_TIME_STEPS}length_{LSTM_SIZE}size_{int(time.time())}"
 
 # set FEATURE_MODEL to None if no keras model is used
-FEATURE_MODEL = None
+FEATURE_MODEL = "/home/jonas/Desktop/testing/convnet/test1/Model.hdf5"
 # LAYER_NAME can be obtained from calling model.summary()
-LAYER_NAME = "dense_2"
+LAYER_NAME = "global_average_pooling1d"
+CONV_NET = True
 
 # set DBN_MODEL to None if no dbn is used
 DBN_MODEL = None
@@ -42,7 +43,7 @@ if FEATURE_MODEL is not None and DBN_MODEL is not None:
     raise AttributeError("Keras model and DBN model given, set one or both to None!")
 
 # get training and validation files
-LOAD_PATH = "/home/jonas/HDD/data/unwindowed/unwindowed_Fourier-transformed/"
+LOAD_PATH = "/home/jonas/Desktop/testing/raw_data_30s_intervals/"
 KEYS = ["sample", "one_hot_label"]
 DATA_TYPES = ["float32", "int32"]
 
@@ -75,6 +76,12 @@ all_train_samples, all_train_labels, all_val_samples, all_val_labels = extract_s
                                                                                        KEYS,
                                                                                        DATA_TYPES,
                                                                                        False)
+if CONV_NET:
+    for d, train_samples in enumerate(all_train_samples):
+        all_train_samples[d] = train_samples.reshape([-1, train_samples.shape[-1] // 3, 3])
+
+    for d, val_samples in enumerate(all_val_samples):
+        all_val_samples[d] = val_samples.reshape([-1, val_samples.shape[-1] // 3, 3])
 
 # get outputs from model if required
 if FEATURE_MODEL is not None:

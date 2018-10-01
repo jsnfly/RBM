@@ -166,7 +166,8 @@ def dataset_from_TFRecords(file_name, batch_size, keys, data_types, shuffle_buff
     dataset = dataset.map(map_func=parse, num_parallel_calls=num_cores)
     if shuffle_buffer != 0:
         dataset = dataset.shuffle(buffer_size=shuffle_buffer)
-    dataset = dataset.batch(batch_size)
+    if batch_size > 1:
+        dataset = dataset.batch(batch_size)
     return dataset
 
 

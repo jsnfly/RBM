@@ -15,23 +15,24 @@ from lstm.lstm_helper_functions import *
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
-NUM_TIME_STEPS = 60
+NUM_TIME_STEPS = 5
 LSTM_SIZE = 64
-REVERSE = False
-BATCH_SIZE = 64
+REVERSE = True
+BATCH_SIZE = 32
 EPOCHS = 10
 LEARNING_RATE = 0.001
 FORWARD_DROPOUT = 0.5
 RECURRENT_DROPOUT = 0.0
-SAVE_PATH = "/home/jonas/Desktop/testing/stateful"
-SAVE_NAME = f"Fourier_{NUM_TIME_STEPS}length_{LSTM_SIZE}size_{int(time.time())}"
+SAVE_PATH = "/home/jonas/Desktop/testing/convnet/stateful/"
+SAVE_NAME = f"{NUM_TIME_STEPS}length_{LSTM_SIZE}size_{int(time.time())}"
 if REVERSE is True:
     SAVE_NAME = SAVE_NAME + "_Reverse"
 
 # set FEATURE_MODEL to None if no keras model is used
-FEATURE_MODEL = '/home/jonas/Desktop/pre_train_raw_data/512_256_128_64/unbalanced_old_and_new/finetune_unbalanced/run1Model.hdf5'
+FEATURE_MODEL = "/home/jonas/Desktop/testing/convnet/test1/Model.hdf5"
 # LAYER_NAME can be obtained from calling model.summary()
-LAYER_NAME = "dense_3"
+LAYER_NAME = "global_average_pooling1d"
+CONV_NET = True
 
 # set DBN_MODEL to None if no dbn is used
 DBN_MODEL = None
@@ -42,7 +43,7 @@ if FEATURE_MODEL is not None and DBN_MODEL is not None:
     raise AttributeError("Keras model and DBN model given, set one or both to None!")
 
 # get training and validation files
-LOAD_PATH = "/home/jonas/HDD/data/unwindowed/unwindowed_Fourier-transformed/"
+LOAD_PATH = "/home/jonas/Desktop/testing/raw_data_30s_intervals/"
 KEYS = ["sample", "one_hot_label"]
 DATA_TYPES = ["float32", "int32"]
 
@@ -75,6 +76,12 @@ all_train_samples, all_train_labels, all_val_samples, all_val_labels = extract_s
                                                                                        KEYS,
                                                                                        DATA_TYPES,
                                                                                        REVERSE)
+if CONV_NET:
+    for d, train_samples in enumerate(all_train_samples):
+        all_train_samples[d] = train_samples.reshape([-1, train_samples.shape[-1] // 3, 3])
+
+    for d, val_samples in enumerate(all_val_samples):
+        all_val_samples[d] = val_samples.reshape([-1, val_samples.shape[-1] // 3, 3])
 
 print("after file reading:\n___________________")
 for s, l in zip(all_train_samples, all_train_labels):
