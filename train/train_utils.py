@@ -172,11 +172,12 @@ def get_best_learning_rate(batch, layer_type, etas, cd_steps,
 
     e_model = calculate_energy(layer_type, vn, hn, train_vbiases, train_hbiases, train_weights, train_log_sigmas)
 
-    for candidate_eta in etas:
+    for i in range(3):
+        candidate_eta = etas[i]
         vbiases_prime = train_vbiases + candidate_eta * delta_vbiases
         hbiases_prime = train_hbiases + candidate_eta * delta_hbiases
         weights_prime = train_weights + candidate_eta * delta_weights
-        if layer_type == 'gb':
+        if layer_type == 'gb' or layer_type == 'gr':
             log_sigmas_prime = train_log_sigmas + candidate_eta * delta_log_sigmas
         else:
             log_sigmas_prime = None

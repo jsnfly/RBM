@@ -231,8 +231,8 @@ class RBM:
 
         shuffle_buffer_size = 100000
         epsilon = 0.025
-        max_eta = 0.1
-        min_eta = 0.0001
+        max_eta = 0.05
+        min_eta = 0.01
 
         # set up summary writer:
         if summary_path:
