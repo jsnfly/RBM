@@ -159,10 +159,9 @@ for load_path in load_paths:
                     samples = np.concatenate(batches)
                     labels = np.concatenate(label_batches)
                     if SHUFFLE:
-                        joined = np.concatenate([samples, labels], axis=1)
-                        np.random.shuffle(joined)
-                        samples = joined[:, :3*WINDOW_SIZE]
-                        labels = joined[:, 3*WINDOW_SIZE:]
+                        permutation = np.random.permutation(samples.shape[0])
+                        samples = samples[permutation]
+                        labels = labels[permutation]
 
                     keys_and_raw_features = {'sample': samples,
                                              'one_hot_label': labels}
@@ -176,10 +175,9 @@ for load_path in load_paths:
                 samples = np.concatenate(batches)
                 labels = np.concatenate(label_batches)
                 if SHUFFLE:
-                    joined = np.concatenate([samples, labels], axis=1)
-                    np.random.shuffle(joined)
-                    samples = joined[:, :3*WINDOW_SIZE]
-                    labels = joined[:, 3*WINDOW_SIZE:]
+                    permutation = np.random.permutation(samples.shape[0])
+                    samples = samples[permutation]
+                    labels = labels[permutation]
                 keys_and_raw_features = {'sample': samples,
                                          'one_hot_label': labels}
                 make_ds.write_to_TFRecord(os.path.join(SAVE_PATH, file_name + f'({file_counter}).tfrecords'),

@@ -316,5 +316,5 @@ plt.figure(figsize=(5.79, 5.79))
 plot_confusion_matrix(cm, classes=class_names, normalize=True,
                       title='Normalized confusion matrix')
 if SAVE_PATH is not None:
-    plt.savefig(os.path.join(SAVE_PATH, "confusion_matrix.pdf"), format='pdf')
+    plt.savefig(os.path.join(SAVE_PATH, "confusion_matrix.pdf"), format='pdf', bbox_inches='tight')
 plt.show()
