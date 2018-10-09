@@ -156,12 +156,14 @@ for load_path in load_paths:
                 label_batches.append(label_batch_)
                 batch_counter += 1
                 if batch_counter * BATCH_SIZE >= SAMPLES_PER_FILE:
-                    if SHUFFLE:
-                        joined = list(zip(batches, label_batches))
-                        random.shuffle(joined)
-                        batches, label_batches = zip(*joined)
                     samples = np.concatenate(batches)
                     labels = np.concatenate(label_batches)
+                    if SHUFFLE:
+                        joined = np.concatenate([samples, labels], axis=1)
+                        np.random.shuffle(joined)
+                        samples = joined[:, :3*WINDOW_SIZE]
+                        labels = joined[:, 3*WINDOW_SIZE:]
+
                     keys_and_raw_features = {'sample': samples,
                                              'one_hot_label': labels}
                     make_ds.write_to_TFRecord(os.path.join(SAVE_PATH, file_name + f'({file_counter}).tfrecords'),
@@ -171,12 +173,13 @@ for load_path in load_paths:
                     batch_counter = 0
                     file_counter += 1
             except tf.errors.OutOfRangeError:
-                if SHUFFLE:
-                    joined = list(zip(batches, label_batches))
-                    random.shuffle(joined)
-                    batches, label_batches = zip(*joined)
                 samples = np.concatenate(batches)
                 labels = np.concatenate(label_batches)
+                if SHUFFLE:
+                    joined = np.concatenate([samples, labels], axis=1)
+                    np.random.shuffle(joined)
+                    samples = joined[:, :3*WINDOW_SIZE]
+                    labels = joined[:, 3*WINDOW_SIZE:]
                 keys_and_raw_features = {'sample': samples,
                                          'one_hot_label': labels}
                 make_ds.write_to_TFRecord(os.path.join(SAVE_PATH, file_name + f'({file_counter}).tfrecords'),

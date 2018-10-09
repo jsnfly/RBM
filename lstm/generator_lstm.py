@@ -76,7 +76,7 @@ all_train_samples, all_train_labels, all_val_samples, all_val_labels = extract_s
                                                                                        KEYS,
                                                                                        DATA_TYPES,
                                                                                        False)
-if CONV_NET:
+if CONV_NET and FEATURE_MODEL is not None:
     for d, train_samples in enumerate(all_train_samples):
         all_train_samples[d] = train_samples.reshape([-1, train_samples.shape[-1] // 3, 3])
 
